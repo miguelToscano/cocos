@@ -26,7 +26,7 @@ export class UsersService {
   async getUserDetail(id: number): Promise<GetUserDetailDto> {
     return {
       user: {
-        id: 1,
+        id: id,
         publicId: "fijowkedls",
         email: "test@gmail.com",
         accounts: [],
