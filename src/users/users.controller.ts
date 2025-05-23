@@ -27,7 +27,7 @@ export class UsersController {
 
   @Get(":id")
   getUserDetail(@Param("id") id: number) {
-    return this.usersService.getUserDetail(id);
+    return this.usersService.getUser(id);
   }
 
   @Patch(":id")

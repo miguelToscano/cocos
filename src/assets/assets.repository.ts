@@ -1,6 +1,7 @@
 import { Sequelize } from "sequelize-typescript";
 import { Asset } from "./domain/entities/asset.entity";
 import { Injectable } from "@nestjs/common";
+import { QueryTypes } from "sequelize";
 
 @Injectable()
 export class AssetsRepository {
@@ -12,20 +13,26 @@ export class AssetsRepository {
   }: {
     limit: number;
     offset: number;
-  }): Promise<Asset[]> {
-    const [assets] = await this.sequelize.query(
+  }): Promise<{ assets: Asset[]; count: number }> {
+    const result = await this.sequelize.query<(Asset & { count: number })>(
       `
-        SELECT 
-          id,
-          ticker,
-          name,
-          type
-        FROM instruments i
-        ORDER BY i.name ASC
+        WITH matches AS (
+            SELECT 
+              id,
+              ticker,
+              name,
+              type,
+              COUNT(*) OVER()
+            FROM instruments i 
+            ORDER BY name ASC
+          )
+        SELECT *
+        FROM matches
         LIMIT :limit
         OFFSET :offset
       `,
       {
+        type: QueryTypes.SELECT,
         replacements: {
           limit,
           offset,
@@ -33,7 +40,12 @@ export class AssetsRepository {
       },
     );
 
-    return assets as Asset[];
+    console.log(result)
+
+    return {
+      assets: result as Asset[],
+      count: result[0]?.count ?? 0
+    };
   }
 
   async searchAssets({
@@ -44,34 +56,39 @@ export class AssetsRepository {
     search: string;
     limit: number;
     offset: number;
-  }): Promise<Asset[]> {
-    const [assets] = await this.sequelize.query(
+  }): Promise<{ assets: Asset[]; count: number }> {
+    const result = await this.sequelize.query<Asset & { count: number }>(
       `
-        SELECT 
-          id,
-          ticker,
-          name,
-          type
-        FROM instruments i
-        where 
-          :search < i.name
-          and word_similarity(i.name, :search) > 0.10
-        order by 
-          word_similarity(i.name, :search) desc,
-          i.name asc
-        limit :limit
-        offset :offset
+          WITH matches AS (
+            SELECT 
+              id,
+              ticker,
+              name,
+              type,
+              COUNT(*) OVER()
+            FROM instruments i 
+            WHERE i.name ILIKE :search
+            ORDER BY name ASC
+          )
+          SELECT *
+          FROM matches
+          LIMIT :limit
+          OFFSET :offset
       `,
       {
+        type: QueryTypes.SELECT,
         replacements: {
-          search,
+          search: `%${search}%`,
           limit,
           offset,
         },
       },
     );
 
-    return assets as Asset[];
+    return {
+      assets: result as Asset[],
+      count: result[0]?.count ?? 0,
+    };
   }
 
   async getAsset(id: number): Promise<Asset | null> {

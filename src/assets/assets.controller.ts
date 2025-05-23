@@ -27,9 +27,7 @@ export class AssetsController {
   async getAsset(
     @Param() params: GetAssetRequestDto,
   ): Promise<GetAssetResponseDto> {
-    const response = this.assetsService.getAsset({
-      id: params.id,
-    });
+    const response = this.assetsService.getAsset(params.id);
     return response;
   }
 }

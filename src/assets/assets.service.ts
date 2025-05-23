@@ -5,52 +5,36 @@ import {
   DEFAULT_LIMIT,
   DEFAULT_OFFSET,
 } from "./domain/constants/pagination.constant";
-import { z } from "zod";
 
-const GetAssetsParamsSchema = z.object({
-  search: z.string().optional(),
-  limit: z.number().min(1).optional(),
-  offset: z.number().min(0).optional(),
-});
-
-type GetAssetsParamsType = z.infer<typeof GetAssetsParamsSchema>;
-
-const GetAssetParamsSchema = z.object({
-  id: z.number(),
-});
-
-type GetAssetParamsType = z.infer<typeof GetAssetParamsSchema>;
 @Injectable()
 export class AssetsService {
   constructor(private readonly assetsRepository: AssetsRepository) {}
 
-  async getAssets(params: GetAssetsParamsType) {
-    const parsedParams = GetAssetsParamsSchema.parse(params);
-
-    parsedParams.limit = parsedParams.limit ?? DEFAULT_LIMIT;
-    parsedParams.offset = parsedParams.offset ?? DEFAULT_OFFSET;
-
-    const assets = parsedParams.search
+  async getAssets({
+    search,
+    limit = DEFAULT_LIMIT,
+    offset = DEFAULT_OFFSET,
+  }: {
+    search?: string;
+    limit?: number;
+    offset?: number;
+  }) {
+    const assets = search
       ? await this.assetsRepository.searchAssets({
-          search: parsedParams.search,
-          limit: parsedParams.limit,
-          offset: parsedParams.offset,
+          search,
+          limit,
+          offset,
         })
       : await this.assetsRepository.getAssets({
-          limit: parsedParams.limit,
-          offset: parsedParams.offset,
+          limit,
+          offset,
         });
 
-    return {
-      assets: assets as Asset[],
-      count: assets.length,
-    };
+    return assets;
   }
 
-  async getAsset(params: GetAssetParamsType) {
-    const parsedParams = GetAssetParamsSchema.parse(params);
-
-    const asset = await this.assetsRepository.getAsset(parsedParams.id);
+  async getAsset(id: number) {
+    const asset = await this.assetsRepository.getAsset(id);
     return {
       asset,
     };

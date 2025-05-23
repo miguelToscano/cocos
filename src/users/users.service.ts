@@ -4,6 +4,7 @@ import { UpdateUserDto } from "./dto/update-user.dto";
 import { UsersRepository } from "./users.repository";
 import { GetUsersDto } from "./dto/get-users.dto";
 import { GetUserDetailDto } from "./dto/get-user-detail.dto";
+import { User } from "./entities/user.entity";
 
 @Injectable()
 export class UsersService {
@@ -23,6 +24,10 @@ export class UsersService {
     };
   }
 
+  async getUser(id: number): Promise<User> {
+    const user = await this.usersRepository.getUser(id);
+    return user;
+  }
   async getUserDetail(id: number): Promise<GetUserDetailDto> {
     return {
       user: {
@@ -47,7 +52,7 @@ export class UsersService {
   }
 
   async getUserPortFolio(userId: number): Promise<any> {
-    const portfolio = await this.usersRepository.getUserPortfolio({userId});
+    const portfolio = await this.usersRepository.getUserPortfolio({ userId });
     return portfolio;
   }
 }
