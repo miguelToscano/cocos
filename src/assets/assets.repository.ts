@@ -6,21 +6,44 @@ import { Injectable } from "@nestjs/common";
 export class AssetsRepository {
   constructor(private readonly sequelize: Sequelize) {}
 
-  async getAssets(): Promise<Asset[]> {
-    const [assets] = await this.sequelize.query(`
+  async getAssets({
+    limit,
+    offset,
+  }: {
+    limit: number;
+    offset: number;
+  }): Promise<Asset[]> {
+    const [assets] = await this.sequelize.query(
+      `
         SELECT 
           id,
           ticker,
           name,
           type
         FROM instruments i
-        limit 10
-      `);
+        LIMIT :limit
+        OFFSET :offset
+      `,
+      {
+        replacements: {
+          limit,
+          offset,
+        },
+      },
+    );
 
     return assets as Asset[];
   }
 
-  async searchAssets(search: string): Promise<Asset[]> {
+  async searchAssets({
+    search,
+    limit,
+    offset,
+  }: {
+    search: string;
+    limit: number;
+    offset: number;
+  }): Promise<Asset[]> {
     const [assets] = await this.sequelize.query(
       `
         SELECT 
@@ -35,12 +58,14 @@ export class AssetsRepository {
         order by 
           word_similarity(i.name, :search) desc,
           i.name asc
-
-        limit 10
+        limit :limit
+        offset :offset
       `,
       {
         replacements: {
           search,
+          limit,
+          offset,
         },
       },
     );

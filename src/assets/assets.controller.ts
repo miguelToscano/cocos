@@ -11,16 +11,25 @@ export class AssetsController {
   constructor(private readonly assetsService: AssetsService) {}
 
   @Get()
-  getAssets(
+  async getAssets(
     @Query() query: GetAssetsRequestDto,
   ): Promise<GetAssetsResponseDto> {
-    return this.assetsService.getAssets({
+    const response = await this.assetsService.getAssets({
       search: query.search,
+      limit: query.limit,
+      offset: query.offset,
     });
+
+    return response;
   }
 
   @Get("/:id")
-  getAsset(@Param() params: GetAssetRequestDto): Promise<GetAssetResponseDto> {
-    return this.assetsService.getAsset(params);
+  async getAsset(
+    @Param() params: GetAssetRequestDto,
+  ): Promise<GetAssetResponseDto> {
+    const response = this.assetsService.getAsset({
+      id: params.id,
+    });
+    return response;
   }
 }
