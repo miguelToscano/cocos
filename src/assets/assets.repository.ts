@@ -21,6 +21,7 @@ export class AssetsRepository {
           name,
           type
         FROM instruments i
+        ORDER BY i.name ASC
         LIMIT :limit
         OFFSET :offset
       `,
