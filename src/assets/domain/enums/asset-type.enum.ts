@@ -1,1 +1,4 @@
-export type AssetType = "ACCIONES" | "MONEDA";
+export enum AssetType {
+    ACCIONES = "ACCIONES",
+    MONEDA = "MONEDA",
+};
