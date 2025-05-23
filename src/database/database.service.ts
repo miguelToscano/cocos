@@ -1,5 +1,5 @@
-import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
-import { Sequelize } from 'sequelize-typescript';
+import { Injectable, OnModuleInit, Logger } from "@nestjs/common";
+import { Sequelize } from "sequelize-typescript";
 
 @Injectable()
 export class DatabaseService implements OnModuleInit {
@@ -14,9 +14,9 @@ export class DatabaseService implements OnModuleInit {
   async ping(): Promise<void> {
     try {
       await this.sequelize.authenticate();
-      this.logger.log('Database connection has been established successfully.');
+      this.logger.log("Database connection has been established successfully.");
     } catch (error) {
-      this.logger.error('Unable to connect to the database:', error);
+      this.logger.error("Unable to connect to the database:", error);
       throw error;
     }
   }

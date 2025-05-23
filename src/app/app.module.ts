@@ -13,7 +13,7 @@ import { DatabaseModule } from "src/database/database.module";
     }),
     UsersModule,
     AssetsModule,
-    DatabaseModule
+    DatabaseModule,
   ],
 })
 export class AppModule {}

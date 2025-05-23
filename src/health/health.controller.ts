@@ -11,7 +11,7 @@ export class HealthController {
   constructor(
     private readonly health: HealthCheckService,
     private readonly http: HttpHealthIndicator,
-    private readonly databaseService: DatabaseService
+    private readonly databaseService: DatabaseService,
   ) {}
 
   @Get()
