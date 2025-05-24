@@ -1,7 +1,10 @@
 import { Body, Controller, Post, Param, Get } from "@nestjs/common";
 import { UsersService } from "./users.service";
 import { CreateOrderDto } from "./dto/create-order.dto";
-import { GetUserPortfolioRequestDto } from "./dto/get-user-portfolio.dto";
+import {
+  GetUserPortfolioRequestDto,
+  GetUserPortfolioResponseDto,
+} from "./dto/get-user-portfolio.dto";
 
 @Controller("users")
 export class UsersController {
@@ -15,9 +18,8 @@ export class UsersController {
   @Get(":id/portfolio")
   async getUserPortfolio(
     @Param() params: GetUserPortfolioRequestDto,
-  ): Promise<number> {
+  ): Promise<GetUserPortfolioResponseDto> {
     const result = await this.usersService.getUserPortFolio(params.id);
-    console.log(result);
-    return 1;
+    return result as GetUserPortfolioResponseDto;
   }
 }

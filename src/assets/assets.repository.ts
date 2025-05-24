@@ -22,7 +22,7 @@ export class AssetsRepository {
               ticker,
               name,
               type,
-              COUNT(*) OVER()
+              COUNT(i.id) OVER()
             FROM instruments i 
             ORDER BY name ASC
           )

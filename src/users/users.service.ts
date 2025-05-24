@@ -1,19 +1,23 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { UsersRepository } from "./users.repository";
-import { User } from "./domain/entities/user.entity";
+import { Portfolio } from "./domain/aggregates/portfolio-aggregate";
 
 @Injectable()
 export class UsersService {
   constructor(private readonly usersRepository: UsersRepository) {}
 
-  async getUserPortFolio(userId: number): Promise<any> {
-    const portfolio = await this.usersRepository.getUserPortfolio({ userId });
-    return portfolio;
-  }
+  async getUserPortFolio(userId: number): Promise<Portfolio> {
+    const user = await this.usersRepository.getUser(userId);
 
-  async getUser(id: number): Promise<User> {
-    const user = await this.usersRepository.getUser(id);
-    return user;
+    if (!user) {
+      throw new NotFoundException(`User with id: ${userId} not found`);
+    }
+    
+    const portfolio = await this.usersRepository.getUserPortfolio(userId);
+
+    console.log(portfolio);
+
+    return portfolio;
   }
 
   async createOrder(): Promise<any> {
