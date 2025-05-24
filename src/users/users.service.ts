@@ -15,4 +15,8 @@ export class UsersService {
     const user = await this.usersRepository.getUser(id);
     return user;
   }
+
+  async createOrder(): Promise<any> {
+    throw new Error("Not implemented");
+  }
 }

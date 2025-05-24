@@ -1,4 +1,4 @@
 export enum AssetType {
-    ACCIONES = "ACCIONES",
-    MONEDA = "MONEDA",
-};
+  ACCIONES = "ACCIONES",
+  MONEDA = "MONEDA",
+}

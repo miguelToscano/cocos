@@ -4,7 +4,7 @@ import {
   HttpHealthIndicator,
   HealthCheck,
 } from "@nestjs/terminus";
-import { DatabaseService } from "../database/database.service";
+import { DatabaseService } from "../shared/database/database.service";
 
 @Controller("health")
 export class HealthController {

@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { AssetsRepository } from "./assets.repository";
 import { Asset } from "./domain/entities/asset.entity";
 import {
@@ -10,6 +10,15 @@ import {
 export class AssetsService {
   constructor(private readonly assetsRepository: AssetsRepository) {}
 
+  /**
+   * Retrieves a list of assets with optional search, pagination, and count.
+   *
+   * @param params - The parameters for retrieving assets.
+   * @param params.search - Optional search string to filter assets.
+   * @param params.limit - Optional maximum number of assets to return. Defaults to `DEFAULT_LIMIT`.
+   * @param params.offset - Optional number of assets to skip for pagination. Defaults to `DEFAULT_OFFSET`.
+   * @returns A promise that resolves to an object containing the array of assets and the total count.
+   */
   async getAssets({
     search,
     limit = DEFAULT_LIMIT,
@@ -18,7 +27,7 @@ export class AssetsService {
     search?: string;
     limit?: number;
     offset?: number;
-  }) {
+  }): Promise<{ assets: Asset[]; count: number }> {
     const assets = search
       ? await this.assetsRepository.searchAssets({
           search,
@@ -33,10 +42,20 @@ export class AssetsService {
     return assets;
   }
 
-  async getAsset(id: number) {
+  /**
+   * Retrieves an asset by its unique identifier.
+   *
+   * @param id - The unique identifier of the asset to retrieve.
+   * @returns A promise that resolves to the requested {@link Asset}.
+   * @throws NotFoundException If no asset with the specified id is found.
+   */
+  async getAsset(id: number): Promise<Asset> {
     const asset = await this.assetsRepository.getAsset(id);
-    return {
-      asset,
-    };
+
+    if (!asset) {
+      throw new NotFoundException(`Asset with id: ${id} not found`);
+    }
+
+    return asset;
   }
 }

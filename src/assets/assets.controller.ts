@@ -14,20 +14,23 @@ export class AssetsController {
   async getAssets(
     @Query() query: GetAssetsRequestDto,
   ): Promise<GetAssetsResponseDto> {
-    const response = await this.assetsService.getAssets({
+    const assets = await this.assetsService.getAssets({
       search: query.search,
       limit: query.limit,
       offset: query.offset,
     });
 
-    return response;
+    return assets;
   }
 
   @Get("/:id")
   async getAsset(
     @Param() params: GetAssetRequestDto,
   ): Promise<GetAssetResponseDto> {
-    const response = this.assetsService.getAsset(params.id);
-    return response;
+    const asset = await this.assetsService.getAsset(params.id);
+
+    return {
+      asset,
+    };
   }
 }

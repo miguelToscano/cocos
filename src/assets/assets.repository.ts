@@ -14,7 +14,7 @@ export class AssetsRepository {
     limit: number;
     offset: number;
   }): Promise<{ assets: Asset[]; count: number }> {
-    const result = await this.sequelize.query<(Asset & { count: number })>(
+    const result = await this.sequelize.query<Asset & { count: number }>(
       `
         WITH matches AS (
             SELECT 
@@ -40,11 +40,9 @@ export class AssetsRepository {
       },
     );
 
-    console.log(result)
-
     return {
       assets: result as Asset[],
-      count: result[0]?.count ?? 0
+      count: result[0]?.count ?? 0,
     };
   }
 
@@ -92,7 +90,7 @@ export class AssetsRepository {
   }
 
   async getAsset(id: number): Promise<Asset | null> {
-    const [asset] = await this.sequelize.query(
+    const [asset] = await this.sequelize.query<Asset>(
       `
         SELECT 
           id,
@@ -103,13 +101,12 @@ export class AssetsRepository {
         WHERE i.id = :id
       `,
       {
+        type: QueryTypes.SELECT,
         replacements: {
           id,
         },
       },
     );
-
-    console.log(asset);
 
     return asset as unknown as Asset;
   }
