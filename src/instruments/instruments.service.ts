@@ -39,19 +39,4 @@ export class InstrumentsService {
       throw error;
     }
   }
-
-
-  async getInstrument(id: number): Promise<Instrument> {
-    try {
-      const instrument = await this.instrumentsRepository.getInstrument(id);
-
-      if (!instrument) {
-        throw new NotFoundException(`Instrument with id: ${id} not found`);
-      }
-
-      return instrument;
-    } catch (error) {
-      throw error;
-    }
-  }
 }

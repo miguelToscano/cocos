@@ -7,17 +7,29 @@ import { OrderType } from "./domain/enums/order-type.enum";
 import { OrderSide } from "./domain/enums/order-side.enum";
 import { OrderStatus } from "./domain/enums/order-status.enum";
 
-export class CreateOrderParameters extends PickType(Order, [
-  "instrumentId",
-  "size",
-  "userId",
-]) {}
+export type CreateOrderParameters = Pick<
+  Order,
+  "instrumentId" | "size" | "userId"
+>;
+
+export type CreateCashInOrderParameters = Pick<
+  Order,
+  "instrumentId" | "size" | "userId"
+>;
+
+export type CreateCashOutOrderParameters = Pick<
+  Order,
+  "instrumentId" | "size" | "userId" | "status"
+>;
 
 @Injectable()
 export class OrdersRepository {
   constructor(private readonly sequelize: Sequelize) {}
 
-  async createCashInOrder(parameters: CreateOrderParameters): Promise<Order> {
+  async createCashInOrder(
+    parameters: CreateCashInOrderParameters,
+  ): Promise<Order> {
+    console.log(parameters.size);
     const createdOrder = await this.sequelize.query<Order>(
       `
         INSERT INTO orders (instrument_id, user_id, size, price, type, side, status)
@@ -38,11 +50,13 @@ export class OrdersRepository {
     return createdOrder as Order;
   }
 
-  async createCashOutOrder(parameters: CreateOrderParameters): Promise<Order> {
+  async createCashOutOrder(
+    parameters: CreateCashOutOrderParameters,
+  ): Promise<Order> {
     const createdOrder = await this.sequelize.query<Order>(
       `
         INSERT INTO orders (instrument_id, user_id, size, price, type, side, status)
-        VALUES (:instrumentId, :userId, :size, 1, '${OrderType.MARKET}', '${OrderSide.CASH_OUT}', '${OrderStatus.FILLED}')
+        VALUES (:instrumentId, :userId, :size, 1, '${OrderType.MARKET}', '${OrderSide.CASH_OUT}', :status)
         RETURNING *
       `,
       {
@@ -52,12 +66,17 @@ export class OrdersRepository {
           instrumentId: parameters.instrumentId,
           userId: parameters.userId,
           size: parameters.size,
+          status: parameters.status,
         },
       },
     );
 
     return createdOrder as Order;
   }
+
+  async createBuyMarketOrder() {}
+
+  async createSellMarketOrder() {}
 
   async createBuyOrder(
     parameters: CreateOrderParameters & { price: number },

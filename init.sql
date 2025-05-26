@@ -13,15 +13,20 @@ CREATE TABLE instruments (
   id SERIAL PRIMARY KEY,
   ticker VARCHAR(10) UNIQUE NOT NULL,
   name VARCHAR(255) UNIQUE NOT NULL,
-  type VARCHAR(10) NOT NULL
+  type VARCHAR(10) NOT NULL,
+  textsearchable_index_col tsvector GENERATED ALWAYS AS (to_tsvector('spanish', ticker || ' ' || name)) STORED
 );
+
+-- Both of these indexes support TEXT search when searching by `tsvector && tsquery` and `TEXT ilike %TEXT%`
+CREATE INDEX textsearch_idx ON instruments USING GIN (textsearchable_index_col);
+CREATE INDEX trgm_name_idx ON instruments USING GIN ((ticker || ' ' || name) gin_trgm_ops);
 
 CREATE TABLE orders (
   id SERIAL PRIMARY KEY,
   public_id UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
   instrument_id INT NOT NULL REFERENCES instruments(id) ON DELETE RESTRICT ON UPDATE CASCADE,
   user_id INT NOT NULL REFERENCES users(id) ON DELETE RESTRICT ON UPDATE CASCADE,
-  size INT NOT NULL,
+  size NUMERIC(10, 2) NOT NULL,
   price NUMERIC(10, 2),
   type VARCHAR(10) NOT NULL,
   side VARCHAR(10) NOT NULL,
@@ -283,6 +288,27 @@ INSERT INTO "orders" (instrument_id,user_id,size,price,side,status,type,datetime
   (54,1,500,250,'BUY','FILLED','MARKET','2023-07-13 14:11:20'),
   (31,1,30,1530,'SELL','FILLED','MARKET','2023-07-13 15:13:20');
 
+INSERT INTO instruments (ticker, name, type)
+select
+	'ABC' || generate_series::text as ticker,
+	'ABC ' || generate_series::text || ' S.A.' as name,
+	'ACCIONES' as type
+from generate_series(1, 10000, 1);
+
+INSERT INTO instruments (ticker, name, type)
+select
+	'DEF' || generate_series::text as ticker,
+	'DEF ' || generate_series::text || ' S.A.' as name,
+	'ACCIONES' as type
+from generate_series(1, 10000, 1);
+
+INSERT INTO instruments (ticker, name, type)
+select
+	'GHI' || generate_series::text as ticker,
+	'GHI ' || generate_series::text || ' S.A.' as name,
+	'ACCIONES' as type
+from generate_series(1, 10000, 1);
+
 INSERT INTO orders (instrument_id, user_id, size, price, type, side, status)
 select
 	66 as instrumentid,
@@ -306,3 +332,4 @@ select
 from generate_series(1, 5000, 1);
 
 SELECT pg_prewarm('orders');
+SELECT pg_prewarm('instruments');

@@ -23,15 +23,4 @@ export class InstrumentsController {
 
     return instruments;
   }
-
-  @Get("/:id")
-  async getInstrument(
-    @Param() params: GetInstrumentRequestDto,
-  ): Promise<GetInstrumentResponseDto> {
-    const asset = await this.instrumentsService.getInstrument(params.id);
-
-    return {
-      asset,
-    };
-  }
 }

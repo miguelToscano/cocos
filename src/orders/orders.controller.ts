@@ -16,6 +16,7 @@ export class OrdersController {
       price: body.price,
       side: body.side,
       size: body.size,
+      totalInvestment: body.totalInvestment,
     });
 
     return result;

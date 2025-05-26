@@ -2,6 +2,8 @@ import { Sequelize } from "sequelize-typescript";
 import { Instrument } from "./domain/entities/instrument.entity";
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { QueryTypes } from "sequelize";
+import { InstrumentWithPrice } from "./domain/aggregates/instrument-price";
+import { InstrumentType } from "./domain/enums/instrument-type.enum";
 
 @Injectable()
 export class InstrumentsRepository {
@@ -21,26 +23,37 @@ export class InstrumentsRepository {
   }: {
     limit: number;
     offset: number;
-  }): Promise<{ assets: Instrument[]; count: number }> {
-    const assets = await this.sequelize.query<Instrument & { count: number }>(
+  }): Promise<{ result: Instrument[]; count: number }> {
+    const result = await this.sequelize.query<{
+      instruments: Instrument[];
+      count: number;
+    }>(
       `
         WITH matches AS (
-            SELECT 
-              id,
-              ticker,
-              name,
-              type,
-              COUNT(i.id) OVER()
-            FROM instruments i 
-            ORDER BY name ASC
-          )
-        SELECT *
-        FROM matches
-        LIMIT :limit
-        OFFSET :offset
+              SELECT 
+                id,
+                ticker,
+                name,
+                type,
+                COUNT(i.id) OVER() as count
+              FROM instruments i 
+              LIMIT :limit
+              OFFSET :offset
+        )
+        SELECT 
+          JSONB_AGG(JSONB_BUILD_OBJECT(
+              'id', m.id,
+              'ticker', m.ticker,
+              'name', m.name,
+              'type', m.type
+            ) ORDER BY ticker ASC, name ASC
+          ) as instruments,
+          MAX(count) AS count
+        FROM matches m
       `,
       {
         type: QueryTypes.SELECT,
+        plain: true,
         replacements: {
           limit,
           offset,
@@ -49,8 +62,8 @@ export class InstrumentsRepository {
     );
 
     return {
-      assets: assets as Instrument[],
-      count: assets[0]?.count ?? 0,
+      result: result?.instruments ?? ([] as Instrument[]),
+      count: result?.count ?? 0,
     };
   }
 
@@ -63,67 +76,62 @@ export class InstrumentsRepository {
    * @param params.offset - The number of assets to skip.
    * @returns An object containing the array of matching assets and the total count.
    */
-  async searchInstruments({
-    search,
-    limit,
-    offset,
-  }: {
+  async searchInstruments(parameters: {
     search: string;
     limit: number;
     offset: number;
-  }): Promise<{ assets: Instrument[]; count: number }> {
+  }): Promise<{ instruments: Instrument[]; count: number }> {
     try {
-      const assets = await this.sequelize.query<Instrument & { count: number }>(
+      const result = await this.sequelize.query<{
+        instruments: Instrument[];
+        count: number;
+      }>(
         `
-            set pg_trgm.similarity_threshold = 0.1;
-            WITH strict_matches AS (
+            WITH matches AS (
               SELECT 
                 id,
                 ticker,
                 name,
                 type,
-                1 AS similarity,
-                COUNT(*) OVER()
+                COUNT(i.id) OVER() as count
               FROM instruments i 
-              WHERE i.name ILIKE :search
-                OR i.ticker ILIKE :search
-            ), fuzzy_matches as (
-              select id,
-              ticker,
-              name,
-              type,
-              similarity(i.ticker, :search) as similarity,
-              COUNT(*) OVER()
-              from instruments i
-              where i.ticker % :search
-            ), results_union AS (
-              SELECT *
-              FROM strict_matches
-              UNION
-              SELECT *
-              FROM fuzzy_matches
-              ORDER BY similarity DESC, name ASC
+              WHERE 
+                ticker = :search
+                OR name = :search
+                OR ticker || ' ' || name ILIKE :fuzzySearch
+                OR textsearchable_index_col @@ to_tsquery(:tsQuerySearch)
+              ORDER BY ticker ASC, name ASC
+              LIMIT :limit
+              OFFSET :offset
             )
             SELECT 
-              DISTINCT ON (id)
-              *
-            FROM results_union ru
-            LIMIT :limit
-            OFFSET :offset
+              JSONB_AGG(JSONB_BUILD_OBJECT(
+                  'id', m.id,
+                  'ticker', m.ticker,
+                  'name', m.name,
+                  'type', m.type
+                ) ORDER BY ticker ASC, name ASC
+              ) as instruments,
+              MAX(count) as count
+            FROM matches m
+            
         `,
         {
           type: QueryTypes.SELECT,
+          plain: true,
           replacements: {
-            search: `%${search}%`,
-            limit,
-            offset,
+            search: parameters.search,
+            fuzzySearch: `%${parameters.search.split(" ").join("%")}%`,
+            tsQuerySearch: `${parameters.search.split(" ").join(" & ")}`,
+            limit: parameters.limit,
+            offset: parameters.offset,
           },
         },
       );
 
       return {
-        assets: assets as Instrument[],
-        count: assets[0]?.count ?? 0,
+        instruments: result?.instruments ?? ([] as Instrument[]),
+        count: result?.count ?? 0,
       };
     } catch (error) {
       throw new InternalServerErrorException(error.message);
@@ -136,9 +144,9 @@ export class InstrumentsRepository {
    * @param id - The unique identifier of the asset.
    * @returns The asset if found, otherwise null.
    */
-  async getInstrument(id: number): Promise<Instrument> {
+  async getInstrumentWithPrice(id: number): Promise<InstrumentWithPrice> {
     try {
-      const asset = await this.sequelize.query<Instrument>(
+      const instrument = await this.sequelize.query<InstrumentWithPrice>(
         `
           SELECT 
             id,
@@ -146,8 +154,8 @@ export class InstrumentsRepository {
             name,
             type,
             close,
-            latest_value.close,
-            latest_value.previous_close as "previousClose"
+            COALESCE(latest_value.close, 1) AS close,
+            COALESCE(latest_value.previous_close,1) AS "previousClose"
           FROM instruments i
           LEFT JOIN LATERAL (
             SELECT 
@@ -157,7 +165,7 @@ export class InstrumentsRepository {
             WHERE m.instrument_id = i.id
             ORDER BY date DESC
             LIMIT 1
-          ) as latest_value ON TRUE
+          ) as latest_value ON i.type = '${InstrumentType.ACCIONES}'
           WHERE i.id = :id
         `,
         {
@@ -169,7 +177,7 @@ export class InstrumentsRepository {
         },
       );
 
-      return asset as unknown as Instrument;
+      return instrument as InstrumentWithPrice;
     } catch (error) {
       throw new InternalServerErrorException(error.message);
     }

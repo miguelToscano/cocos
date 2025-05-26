@@ -4,6 +4,7 @@ import {
   IsOptional,
   IsPositive,
   IsString,
+  Min,
 } from "class-validator";
 import { Instrument } from "../domain/entities/instrument.entity";
 import { Type } from "class-transformer";
@@ -22,7 +23,7 @@ export class GetInstrumentsRequestDto {
 
   @Type(() => Number)
   @IsInt()
-  @IsPositive()
+  @Min(0)
   @IsOptional()
   offset?: number;
 }

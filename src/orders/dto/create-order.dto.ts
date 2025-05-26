@@ -8,10 +8,27 @@ import {
   Min,
   IsOptional,
   ValidateIf,
+  Validate,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+  ValidationArguments,
 } from "class-validator";
 import { OrderSide } from "../../orders/domain/enums/order-side.enum";
 import { OrderType } from "../../orders/domain/enums/order-type.enum";
-import { Order } from "../../orders/domain/entities/order.entity";
+
+@ValidatorConstraint({ name: "onlyOne", async: false })
+export class OnlyOneDefined implements ValidatorConstraintInterface {
+  validate(_: any, args: ValidationArguments) {
+    const obj = args.object as any;
+    return (
+      (obj.size !== undefined && obj.totalInvestment === undefined) ||
+      (obj.size === undefined && obj.totalInvestment !== undefined)
+    );
+  }
+  defaultMessage(args: ValidationArguments) {
+    return "You must provide either size or totalInvestment, but not both.";
+  }
+}
 
 export class CreateOrderRequestDto {
   @Type(() => Number)
@@ -34,16 +51,26 @@ export class CreateOrderRequestDto {
 
   @Type(() => Number)
   @IsNumber()
-  @Min(1)
   @IsPositive()
-  size: number;
+  @ValidateIf(
+    (o) =>
+      o.type === OrderType.LIMIT &&
+      (o.side === OrderSide.BUY || o.side === OrderSide.SELL),
+  )
+  price?: number;
 
   @Type(() => Number)
   @IsNumber()
   @IsPositive()
-  @ValidateIf((o) => o.type === OrderType.LIMIT)
-  @IsOptional()
-  price: number;
-}
+  @ValidateIf((o) => o.totalInvestment === undefined)
+  size?: number;
 
-export class CreateOrderResponseDto extends Order {}
+  @Type(() => Number)
+  @IsNumber()
+  @IsPositive()
+  @ValidateIf((o) => o.size === undefined)
+  totalInvestment?: number;
+
+  @Validate(OnlyOneDefined)
+  private onlyOne?: any;
+}

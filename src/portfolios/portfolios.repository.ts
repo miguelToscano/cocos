@@ -85,28 +85,28 @@ export class PortfoliosRepository {
 
   async getUserBalance(userId: number) {
     try {
-      const userBalance = await this.sequelize.query<any>(
-        `
-            select 
-                COALESCE(SUM(o.price * o.size) FILTER (WHERE o.side IN ('${OrderSide.CASH_IN}', '${OrderSide.SELL}')), 0) -
-                COALESCE(SUM(o.price * o.size) FILTER (WHERE o.side IN ('${OrderSide.CASH_OUT}', '${OrderSide.BUY}')), 0)::NUMERIC(10, 2) as value,
-                'ARS' as currency
-            FROM users u
-            left join orders o on o.user_id = u.id
-            left JOIN instruments i ON i.id = o.instrument_id
-            WHERE 
-                u.id = :userId
-                and o.user_id = :userId
-                AND o.status = '${OrderStatus.FILLED}';
-          `,
-        {
-          type: QueryTypes.SELECT,
-          plain: true,
-          replacements: {
-            userId,
-          },
+    const userBalance = await this.sequelize.query<any>(
+      `
+        SELECT 
+            COALESCE(SUM(o.price * o.size) FILTER (WHERE o.side IN ('${OrderSide.CASH_IN}', '${OrderSide.SELL}')), 0) -
+            COALESCE(SUM(o.price * o.size) FILTER (WHERE o.side IN ('${OrderSide.CASH_OUT}', '${OrderSide.BUY}')), 0)::NUMERIC(10, 2) AS value,
+            'ARS' AS currency
+        FROM users u
+        LEFT JOIN orders o ON o.user_id = u.id
+        LEFT JOIN instruments i ON i.id = o.instrument_id
+        WHERE 
+            u.id = :userId
+            AND o.user_id = :userId
+            AND o.status = '${OrderStatus.FILLED}';
+        `,
+      {
+        type: QueryTypes.SELECT,
+        plain: true,
+        replacements: {
+        userId,
         },
-      );
+      },
+    );
 
       return userBalance;
     } catch (error) {

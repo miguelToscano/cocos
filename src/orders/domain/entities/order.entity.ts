@@ -2,7 +2,7 @@ import { OrderSide } from "../enums/order-side.enum";
 import { OrderStatus } from "../enums/order-status.enum";
 import { OrderType } from "../enums/order-type.enum";
 
-export class Order {
+export interface Order {
   id: number;
   instrumentId: number;
   userId: number;
