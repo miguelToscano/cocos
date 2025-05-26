@@ -39,9 +39,9 @@ export class OrdersService {
     userId: number;
     instrumentId: number;
     price: number;
-    side: OrderSide; // Assuming side is a string, adjust as necessary
+    side: OrderSide;
     size: number;
-    type: OrderType; // Assuming type is a string, adjust as necessary
+    type: OrderType;
   }) {
     const instrument = await this.instrumentsRepository.getInstrument(
       parameters.instrumentId,

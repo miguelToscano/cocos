@@ -111,8 +111,4 @@ export class OrdersRepository {
 
     return createdOrder as Order;
   }
-
-  async getUserPortfolio(userId: number) {}
-
-  async getUserBalance(userId: number) {}
 }

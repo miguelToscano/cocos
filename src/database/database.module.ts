@@ -15,14 +15,13 @@ import { DatabaseService } from "./database.service";
       autoLoadModels: false,
       synchronize: false,
 
-      // ✅ Connection pool settings
       pool: {
-        max: 10, // Max number of connections in pool
-        min: 2, // Minimum number of connections
-        acquire: 30000, // Max time (ms) to try getting a connection before throwing
-        idle: 10000, // Max time (ms) a connection can be idle before being released
+        max: 10,
+        min: 2,
+        acquire: 30000,
+        idle: 10000,
       },
-      logging: false, // Optional: disable logging
+      logging: false,
     }),
   ],
   providers: [DatabaseService],
