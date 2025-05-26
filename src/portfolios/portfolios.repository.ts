@@ -1,6 +1,9 @@
 import { Injectable } from "@nestjs/common";
 import { QueryTypes } from "sequelize";
 import { Sequelize } from "sequelize-typescript";
+import { InstrumentType } from "src/instruments/domain/enums/instrument-type.enum";
+import { OrderSide } from "src/orders/domain/enums/order-side.enum";
+import { OrderStatus } from "src/orders/domain/enums/order-status.enum";
 
 @Injectable()
 export class PortfoliosRepository {
@@ -17,7 +20,7 @@ export class PortfoliosRepository {
                   i.name,
                   marketdata.close,
                   marketdata.previous_close,
-                  COALESCE(SUM(o.size) FILTER (WHERE o.side = 'BUY'), 0) - COALESCE(SUM(o.size) FILTER (WHERE o.side = 'SELL'), 0) AS quantity
+                  COALESCE(SUM(o.size) FILTER (WHERE o.side = '${OrderSide.BUY}'), 0) - COALESCE(SUM(o.size) FILTER (WHERE o.side = '${OrderSide.SELL}'), 0) AS quantity
               FROM orders o
               INNER JOIN instruments i ON o.instrument_id = i.id
               LEFT JOIN LATERAL (
@@ -31,8 +34,8 @@ export class PortfoliosRepository {
               ) AS marketdata ON TRUE
               WHERE 
                   o.user_id = :userId
-                  AND o.status = 'FILLED'
-                  AND i.type = 'ACCIONES'
+                  AND o.status = '${OrderStatus.FILLED}'
+                  AND i.type = '${InstrumentType.ACCIONES}'
               GROUP BY o.user_id, i.id, i.ticker, i.name, marketdata.close, marketdata.previous_close
           )
           SELECT
@@ -41,15 +44,15 @@ export class PortfoliosRepository {
           FROM users u
           LEFT JOIN LATERAL (
               SELECT JSONB_BUILD_OBJECT(
-                'value', (COALESCE(SUM(o.price * o.size) FILTER (WHERE side IN ('CASH_IN', 'SELL')), 0) -
-                  COALESCE(SUM(o.price * o.size) FILTER (WHERE side IN ('CASH_OUT', 'BUY')), 0))::NUMERIC(10, 2),
+                'value', (COALESCE(SUM(o.price * o.size) FILTER (WHERE side IN ('${OrderSide.CASH_IN}', '${OrderSide.SELL}')), 0) -
+                  COALESCE(SUM(o.price * o.size) FILTER (WHERE side IN ('${OrderSide.CASH_OUT}', '${OrderSide.BUY}')), 0))::NUMERIC(10, 2),
                 'currency', 'ARS'
               ) AS balance
               FROM orders o
               INNER JOIN instruments i ON i.id = o.instrument_id
               WHERE 
                   o.user_id = u.id
-                  AND o.status = 'FILLED'
+                  AND o.status = '${OrderStatus.FILLED}'
           ) AS user_balance ON TRUE
           LEFT JOIN LATERAL (
               SELECT
@@ -85,8 +88,8 @@ export class PortfoliosRepository {
       const userBalance = await this.sequelize.query<any>(
         `
             select 
-                COALESCE(SUM(o.price * o.size) FILTER (WHERE o.side IN ('CASH_IN', 'SELL')), 0) -
-                COALESCE(SUM(o.price * o.size) FILTER (WHERE o.side IN ('CASH_OUT', 'BUY')), 0)::NUMERIC(10, 2) as value,
+                COALESCE(SUM(o.price * o.size) FILTER (WHERE o.side IN ('${OrderSide.CASH_IN}', '${OrderSide.SELL}')), 0) -
+                COALESCE(SUM(o.price * o.size) FILTER (WHERE o.side IN ('${OrderSide.CASH_OUT}', '${OrderSide.BUY}')), 0)::NUMERIC(10, 2) as value,
                 'ARS' as currency
             FROM users u
             left join orders o on o.user_id = u.id
@@ -94,7 +97,7 @@ export class PortfoliosRepository {
             WHERE 
                 u.id = :userId
                 and o.user_id = :userId
-                AND o.status = 'FILLED';
+                AND o.status = '${OrderStatus.FILLED}';
           `,
         {
           type: QueryTypes.SELECT,
