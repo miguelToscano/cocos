@@ -23,6 +23,10 @@ export class CreateCashOutOrderParameters extends PickType(Order, [
   "userId",
 ]) {}
 
+export class CreateBuyOrderParameters {}
+
+export class CreateSellOrderParameters {}
+
 @Injectable()
 export class OrdersService {
   constructor(
@@ -95,4 +99,8 @@ export class OrdersService {
 
     return createdOrder;
   }
+
+  private async createBuyOrder() {}
+
+  private async createSellOrder() {}
 }

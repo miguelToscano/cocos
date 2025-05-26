@@ -21,7 +21,7 @@ export class OrdersRepository {
     const createdOrder = await this.sequelize.query<Order>(
       `
         INSERT INTO orders (instrument_id, user_id, size, price, type, side, status)
-        VALUES (:instrumentId, :userId, :size, :price, :type, :side, :status)
+        VALUES (:instrumentId, :userId, :size, 1, '${OrderType.MARKET}', '${OrderSide.CASH_IN}', '${OrderStatus.FILLED}')
         RETURNING *
       `,
       {
@@ -31,10 +31,6 @@ export class OrdersRepository {
           instrumentId: parameters.instrumentId,
           userId: parameters.userId,
           size: parameters.size,
-          price: 1,
-          type: OrderType.MARKET,
-          side: OrderSide.CASH_IN,
-          status: OrderStatus.FILLED,
         },
       },
     );
@@ -46,7 +42,7 @@ export class OrdersRepository {
     const createdOrder = await this.sequelize.query<Order>(
       `
         INSERT INTO orders (instrument_id, user_id, size, price, type, side, status)
-        VALUES (:instrumentId, :userId, :size, :price, :type, :side, :status)
+        VALUES (:instrumentId, :userId, :size, 1, '${OrderType.MARKET}', '${OrderSide.CASH_OUT}', '${OrderStatus.FILLED}')
         RETURNING *
       `,
       {
@@ -56,10 +52,6 @@ export class OrdersRepository {
           instrumentId: parameters.instrumentId,
           userId: parameters.userId,
           size: parameters.size,
-          price: 1,
-          type: OrderType.MARKET,
-          side: OrderSide.CASH_OUT,
-          status: OrderStatus.FILLED,
         },
       },
     );
@@ -119,4 +111,8 @@ export class OrdersRepository {
 
     return createdOrder as Order;
   }
+
+  async getUserPortfolio(userId: number) {}
+
+  async getUserBalance(userId: number) {}
 }

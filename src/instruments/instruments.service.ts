@@ -21,8 +21,8 @@ export class InstrumentsService {
    */
   async getInstruments({
     search,
-    limit = DEFAULT_LIMIT,
-    offset = DEFAULT_OFFSET,
+    limit,
+    offset,
   }: {
     search?: string;
     limit?: number;
@@ -32,12 +32,12 @@ export class InstrumentsService {
       const instruments = search
         ? await this.instrumentsRepository.searchInstruments({
             search,
-            limit,
-            offset,
+            limit: limit ?? DEFAULT_LIMIT,
+            offset: offset ?? DEFAULT_OFFSET,
           })
         : await this.instrumentsRepository.getInstruments({
-            limit,
-            offset,
+            limit: limit ?? DEFAULT_LIMIT,
+            offset: offset ?? DEFAULT_OFFSET,
           });
 
       return instruments as unknown as {
