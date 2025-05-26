@@ -1,9 +1,9 @@
 import { Injectable } from "@nestjs/common";
 import { QueryTypes } from "sequelize";
 import { Sequelize } from "sequelize-typescript";
-import { InstrumentType } from "src/instruments/domain/enums/instrument-type.enum";
-import { OrderSide } from "src/orders/domain/enums/order-side.enum";
-import { OrderStatus } from "src/orders/domain/enums/order-status.enum";
+import { InstrumentType } from "../instruments/domain/enums/instrument-type.enum";
+import { OrderSide } from "../orders/domain/enums/order-side.enum";
+import { OrderStatus } from "../orders/domain/enums/order-status.enum";
 
 @Injectable()
 export class PortfoliosRepository {

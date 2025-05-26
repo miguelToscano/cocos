@@ -5,14 +5,13 @@ import {
 } from "@nestjs/common";
 import { OrdersRepository } from "./orders.repository";
 import { Order } from "./domain/entities/order.entity";
-import { InstrumentsRepository } from "src/instruments/instruments.repository";
+import { InstrumentsRepository } from "../instruments/instruments.repository";
 import { OrderSide } from "./domain/enums/order-side.enum";
 import { OrderType } from "./domain/enums/order-type.enum";
 import { PickType } from "@nestjs/mapped-types";
-import { PortfoliosRepository } from "src/portfolios/portfolios.repository";
-import { Instrument } from "src/instruments/domain/entities/instrument.entity";
-import { InstrumentType } from "src/instruments/domain/enums/instrument-type.enum";
-import { InstrumentWithPrice } from "src/instruments/domain/aggregates/instrument-price";
+import { PortfoliosRepository } from "../portfolios/portfolios.repository";
+import { InstrumentType } from "../instruments/domain/enums/instrument-type.enum";
+import { InstrumentWithPrice } from "../instruments/domain/aggregates/instrument-price";
 import { OrderStatus } from "./domain/enums/order-status.enum";
 
 type CreateCashInOrderParameters = Pick<
