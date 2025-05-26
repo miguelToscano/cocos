@@ -27,8 +27,8 @@ services:
       POSTGRES_DB: cocos
     ports:
       - '5432:5432'
+    command: >
+      postgres
+      -c shared_buffers=1GB
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-volumes:
-  postgres_data:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
