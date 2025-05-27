@@ -54,8 +54,7 @@ export class CreateOrderRequestDto {
   @IsPositive()
   @ValidateIf(
     (o) =>
-      o.type === OrderType.LIMIT &&
-      (o.side === OrderSide.BUY || o.side === OrderSide.SELL),
+      o.type === OrderType.LIMIT
   )
   price?: number;
 

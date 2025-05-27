@@ -23,7 +23,7 @@ export class InstrumentsRepository {
   }: {
     limit: number;
     offset: number;
-  }): Promise<{ result: Instrument[]; count: number }> {
+  }): Promise<{ instruments: Instrument[]; count: number }> {
     const result = await this.sequelize.query<{
       instruments: Instrument[];
       count: number;
@@ -48,7 +48,7 @@ export class InstrumentsRepository {
               'type', m.type
             ) ORDER BY ticker ASC, name ASC
           ) as instruments,
-          MAX(count) AS count
+          MAX(count)::int AS count
         FROM matches m
       `,
       {
@@ -62,7 +62,7 @@ export class InstrumentsRepository {
     );
 
     return {
-      result: result?.instruments ?? ([] as Instrument[]),
+      instruments: result?.instruments ?? ([] as Instrument[]),
       count: result?.count ?? 0,
     };
   }
@@ -98,7 +98,7 @@ export class InstrumentsRepository {
               WHERE 
                 ticker = :search
                 OR name = :search
-                OR ticker || ' ' || name ILIKE :fuzzySearch
+                OR textsearchable_trgm_index_col ILIKE :fuzzySearch
                 OR textsearchable_index_col @@ to_tsquery(:tsQuerySearch)
               ORDER BY ticker ASC, name ASC
               LIMIT :limit
@@ -112,7 +112,7 @@ export class InstrumentsRepository {
                   'type', m.type
                 ) ORDER BY ticker ASC, name ASC
               ) as instruments,
-              MAX(count) as count
+              MAX(count)::int as count
             FROM matches m
             
         `,
@@ -130,7 +130,7 @@ export class InstrumentsRepository {
       );
 
       return {
-        instruments: result?.instruments ?? ([] as Instrument[]),
+        instruments: (result?.instruments ?? []) as Instrument[],
         count: result?.count ?? 0,
       };
     } catch (error) {

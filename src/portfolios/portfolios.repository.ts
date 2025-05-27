@@ -4,13 +4,14 @@ import { Sequelize } from "sequelize-typescript";
 import { InstrumentType } from "../instruments/domain/enums/instrument-type.enum";
 import { OrderSide } from "../orders/domain/enums/order-side.enum";
 import { OrderStatus } from "../orders/domain/enums/order-status.enum";
+import { Balance, Portfolio } from "./domain/aggregates/portfolio.aggregate";
 
 @Injectable()
 export class PortfoliosRepository {
   constructor(private readonly sequelize: Sequelize) {}
 
-  async getUserPortfolio(userId: number) {
-    const userPortfolio = await this.sequelize.query<any>(
+  async getUserPortfolio(userId: number, instrumentId?: number) {
+    const userPortfolio = await this.sequelize.query<Portfolio>(
       `
             WITH assets AS (
               SELECT
@@ -36,6 +37,7 @@ export class PortfoliosRepository {
                   o.user_id = :userId
                   AND o.status = '${OrderStatus.FILLED}'
                   AND i.type = '${InstrumentType.ACCIONES}'
+                  ${instrumentId ? `AND i.id = :instrumentId` : ``}
               GROUP BY o.user_id, i.id, i.ticker, i.name, marketdata.close, marketdata.previous_close
           )
           SELECT
@@ -58,7 +60,7 @@ export class PortfoliosRepository {
               SELECT
                   COALESCE(JSONB_AGG(
                       JSONB_BUILD_OBJECT(
-                          'instrumentId', a.id,
+                          'id', a.id,
                           'ticker', a.ticker,
                           'name', a.name,
                           'quantity', a.quantity,
@@ -76,17 +78,18 @@ export class PortfoliosRepository {
         plain: true,
         replacements: {
           userId,
+          instrumentId,
         },
       },
     );
 
-    return userPortfolio;
+    return userPortfolio as Portfolio;
   }
 
   async getUserBalance(userId: number) {
     try {
-    const userBalance = await this.sequelize.query<any>(
-      `
+      const userBalance = await this.sequelize.query<Balance>(
+        `
         SELECT 
             COALESCE(SUM(o.price * o.size) FILTER (WHERE o.side IN ('${OrderSide.CASH_IN}', '${OrderSide.SELL}')), 0) -
             COALESCE(SUM(o.price * o.size) FILTER (WHERE o.side IN ('${OrderSide.CASH_OUT}', '${OrderSide.BUY}')), 0)::NUMERIC(10, 2) AS value,
@@ -99,16 +102,16 @@ export class PortfoliosRepository {
             AND o.user_id = :userId
             AND o.status = '${OrderStatus.FILLED}';
         `,
-      {
-        type: QueryTypes.SELECT,
-        plain: true,
-        replacements: {
-        userId,
+        {
+          type: QueryTypes.SELECT,
+          plain: true,
+          replacements: {
+            userId,
+          },
         },
-      },
-    );
+      );
 
-      return userBalance;
+      return userBalance as Balance;
     } catch (error) {
       throw error;
     }

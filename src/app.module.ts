@@ -9,7 +9,7 @@ import { PortfoliosModule } from "./portfolios/portfolios.module";
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['.env', '.env.test']
+      envFilePath: [".env", ".env.test"],
     }),
     InstrumentsModule,
     OrdersModule,

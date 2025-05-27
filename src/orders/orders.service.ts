@@ -14,51 +14,25 @@ import { InstrumentType } from "../instruments/domain/enums/instrument-type.enum
 import { InstrumentWithPrice } from "../instruments/domain/aggregates/instrument-price";
 import { OrderStatus } from "./domain/enums/order-status.enum";
 
-type CreateCashInOrderParameters = Pick<
-  Order,
-  "instrumentId" | "size" | "userId"
->;
-
-type CreateCashOutOrderParameters = Pick<
-  Order,
-  "instrumentId" | "size" | "userId"
->;
-
-// type CreateBuyOrderParameters = Pick<Order, 'instrumentId' | 'userId'> & {
-//     amount: FixedAmount | TotalInvestmentAmount;
-//     type: CreateBuyLimitOrderParameters | CreateBuyMarketOrderParameters;
-// }
-
-// type CreateBuyMarketOrderParameters = {
-//     type: OrderType.MARKET;
-//     amount: FixedAmount | TotalInvestmentAmount;
-// }
-
-// type CreateBuyLimitOrderParameters = {
-//     type: OrderType.LIMIT;
-//     amount: FixedAmount | TotalInvestmentAmount;
-//     price: number;
-// }
-
-// type FixedAmount = {
-//     type: 'FIXED'
-//     size: number;
-// }
-
-// type TotalInvestmentAmount = {
-//     type: 'TOTAL_INVESTMENT';
-//     total: number;
-// }
-
-type CreateBuyOrderParameters = Pick<
-  Order,
-  "instrumentId" | "userId" | "type"
-> & {
-  price?: number;
-  size?: number;
-  totalInvestment?: number;
-  instrumentClose: number;
+type CreateCashInOrderParameters = Pick<Order, "size" | "userId"> & {
+  instrument: InstrumentWithPrice;
 };
+
+type CreateCashOutOrderParameters = Pick<Order, "size" | "userId"> & {
+  instrument: InstrumentWithPrice;
+};
+
+type CreateBuyOrderParameters = Pick<Order, "userId" | "type"> &
+  Partial<Pick<Order, "size" | "price">> & {
+    totalInvestment?: number;
+    instrument: InstrumentWithPrice;
+  };
+
+type CreateOrderParameters = Pick<Order, "userId" | "type"> &
+  Partial<Pick<Order, "size" | "price">> & {
+    totalInvestment?: number;
+    instrument: InstrumentWithPrice;
+  };
 
 class CreateSellOrderParameters {}
 
@@ -97,34 +71,39 @@ export class OrdersService {
           )
         : null;
 
-    if (!parameters.size && !sizeFromTotalInvestment) {
-      throw new BadRequestException(`Size or totalInvestment must be provided`);
-    }
-
     switch (parameters.side) {
       case OrderSide.CASH_IN:
         return this.createCashInOrder({
           userId: parameters.userId,
-          instrumentId: parameters.instrumentId,
-          size: (parameters.size ?? sizeFromTotalInvestment)!!,
+          size: parameters.size,
+          instrument,
+          totalInvestment: parameters.totalInvestment,
+          type: parameters.type,
         });
       case OrderSide.CASH_OUT:
         return this.createCashOutOrder({
           userId: parameters.userId,
-          instrumentId: parameters.instrumentId,
           size: (parameters.size ?? sizeFromTotalInvestment)!!,
+          instrument,
         });
       case OrderSide.BUY:
         return this.createBuyOrder({
           userId: parameters.userId,
-          instrumentId: parameters.instrumentId,
           size: parameters.size,
-          instrumentClose: instrument.close,
           type: parameters.type,
           totalInvestment: parameters.totalInvestment,
+          instrument,
+          price: parameters.price,
         });
       case OrderSide.SELL:
-        return this.createSellOrder();
+        return this.createSellOrder({
+          userId: parameters.userId,
+          size: parameters.size,
+          type: parameters.type,
+          totalInvestment: parameters.totalInvestment,
+          price: parameters.price,
+          instrument,
+        });
       default:
     }
   }
@@ -140,27 +119,54 @@ export class OrdersService {
     throw new Error();
   }
 
-  private async createCashInOrder(parameters: CreateCashInOrderParameters) {
-    const createdOrder = await this.ordersRepository.createCashInOrder({
-      instrumentId: parameters.instrumentId,
+  private async createCashInOrder(parameters: CreateOrderParameters) {
+    if (parameters.instrument.type !== InstrumentType.MONEDA) {
+      throw new BadRequestException(
+        `Instrument with id: ${parameters.instrument.id} is not a currency`,
+      );
+    }
+
+    const size =
+      !parameters.size && parameters.totalInvestment
+        ? this.getSizeFromTotalInvestment(
+            parameters.totalInvestment,
+            parameters.instrument,
+          )
+        : parameters.size!!;
+
+    const createdOrder = await this.ordersRepository.createOrder({
+      instrumentId: parameters.instrument.id,
       userId: parameters.userId,
-      size: parameters.size,
+      size,
+      price: parameters.instrument.close,
+      type: OrderType.MARKET,
+      side: OrderSide.CASH_IN,
+      status: OrderStatus.FILLED,
     });
 
     return createdOrder;
   }
 
   private async createCashOutOrder(parameters: CreateCashOutOrderParameters) {
+    if (parameters.instrument.type !== InstrumentType.MONEDA) {
+      throw new BadRequestException(
+        `Instrument with id: ${parameters.instrument.id} is not a currency`,
+      );
+    }
+
     const userBalance = await this.portfoliosRepository.getUserBalance(
       parameters.userId,
     );
 
-    const createdOrder = await this.ordersRepository.createCashOutOrder({
-      instrumentId: parameters.instrumentId,
+    const createdOrder = await this.ordersRepository.createOrder({
+      instrumentId: parameters.instrument.id,
       userId: parameters.userId,
       size: parameters.size,
+      price: parameters.instrument.close,
+      type: OrderType.MARKET,
+      side: OrderSide.CASH_OUT,
       status:
-        userBalance.value < parameters.size
+        userBalance.value < parameters.size * parameters.instrument.close
           ? OrderStatus.REJECTED
           : OrderStatus.FILLED,
     });
@@ -169,12 +175,144 @@ export class OrdersService {
   }
 
   private async createBuyOrder(parameters: CreateBuyOrderParameters) {
+    if (parameters.instrument.type !== InstrumentType.ACCIONES) {
+      throw new BadRequestException(
+        `Instrument with id: ${parameters.instrument.id} is not a stock`,
+      );
+    }
     const userBalance = await this.portfoliosRepository.getUserBalance(
       parameters.userId,
     );
+
+    // 1 - User creates a MARKET order type providing the quantity (size) of shares he wants to buy
+    // 2 - User creates a MARKET order type providing how much money (totalInvestment) he wants to spend
+    if (parameters.type === OrderType.MARKET) {
+      const size =
+        !parameters.size && parameters.totalInvestment
+          ? this.getSizeFromTotalInvestment(
+              parameters.totalInvestment,
+              parameters.instrument,
+            )
+          : parameters.size!!;
+
+      const createdOrder = await this.ordersRepository.createOrder({
+        instrumentId: parameters.instrument.id,
+        userId: parameters.userId,
+        size: size,
+        price: parameters.instrument.close,
+        type: OrderType.MARKET,
+        side: OrderSide.BUY,
+        status:
+          userBalance.value < size * parameters.instrument.close
+            ? OrderStatus.REJECTED
+            : OrderStatus.FILLED,
+      });
+
+      return createdOrder;
+    }
+
+    // 3 - User creates a LIMIT order type providing the quantity (size) and price (price) he wants the order to be executed at
+    // 4 - User creates a LIMIT order type providing the totalInvestment (totalInvestment) and price (price) he wants the order to be executed at
+    if (parameters.type === OrderType.LIMIT) {
+      parameters.instrument.close = parameters.price!!;
+
+      const size =
+        !parameters.size && parameters.totalInvestment
+          ? this.getSizeFromTotalInvestment(
+              parameters.totalInvestment,
+              parameters.instrument,
+            )
+          : parameters.size!!;
+
+      const createdOrder = await this.ordersRepository.createOrder({
+        instrumentId: parameters.instrument.id,
+        userId: parameters.userId,
+        size: size,
+        price: parameters.instrument.close,
+        type: OrderType.LIMIT,
+        side: OrderSide.BUY,
+        status:
+          userBalance.value < size * parameters.instrument.close
+            ? OrderStatus.REJECTED
+            : OrderStatus.NEW,
+      });
+
+      return createdOrder;
+    }
   }
 
-  private async createBuyLimitOrder() {}
+  private async createSellOrder(parameters: CreateOrderParameters) {
+    if (parameters.instrument.type !== InstrumentType.ACCIONES) {
+      throw new BadRequestException(
+        `Instrument with id: ${parameters.instrument.id} is not a stock`,
+      );
+    }
 
-  private async createSellOrder() {}
+    const userPortfolio = await this.portfoliosRepository.getUserPortfolio(
+      parameters.userId,
+      parameters.instrument.id,
+    );
+
+    if (userPortfolio.assets[0]?.id !== parameters.instrument.id) {
+      throw new NotFoundException(
+        `Instrument with id: ${parameters.instrument.id} not found in user portfolio`,
+      );
+    }
+
+    // 1 - User creates a MARKET order type providing the quantity (size) of shares he wants to buy
+    // 2 - User creates a MARKET order type providing how much money (totalInvestment) he wants to spend
+    if (parameters.type === OrderType.MARKET) {
+      const size =
+        !parameters.size && parameters.totalInvestment
+          ? this.getSizeFromTotalInvestment(
+              parameters.totalInvestment,
+              parameters.instrument,
+            )
+          : parameters.size!!;
+
+      const createdOrder = await this.ordersRepository.createOrder({
+        instrumentId: parameters.instrument.id,
+        userId: parameters.userId,
+        size: size,
+        price: parameters.instrument.close,
+        type: OrderType.MARKET,
+        side: OrderSide.SELL,
+        status:
+          userPortfolio.assets[0].quantity < size
+            ? OrderStatus.REJECTED
+            : OrderStatus.FILLED,
+      });
+
+      return createdOrder;
+    }
+
+    // 3 - User creates a LIMIT order type providing the quantity (size) and price (price) he wants the order to be executed at
+    // 4 - User creates a LIMIT order type providing the totalInvestment (totalInvestment) and price (price) he wants the order to be executed at
+    if (parameters.type === OrderType.LIMIT) {
+      parameters.instrument.close = parameters.price!!;
+
+      const size =
+        !parameters.size && parameters.totalInvestment
+          ? this.getSizeFromTotalInvestment(
+              parameters.totalInvestment,
+              parameters.instrument,
+            )
+          : parameters.size!!;
+
+      const createdOrder = await this.ordersRepository.createOrder({
+        instrumentId: parameters.instrument.id,
+        userId: parameters.userId,
+        size: size,
+        price: parameters.instrument.close,
+        type: OrderType.LIMIT,
+        side: OrderSide.BUY,
+        status:
+          userPortfolio.assets[0].quantity < size
+            ? OrderStatus.REJECTED
+            : OrderStatus.NEW,
+      });
+
+      return createdOrder;
+    }
+  }
 }
