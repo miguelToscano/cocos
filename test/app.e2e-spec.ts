@@ -166,7 +166,7 @@ describe("AppController (e2e)", () => {
     expect(response.body.userId).toBe(1);
   });
 
-  it("[POST /orders] CASH_OUT Order creation should fail when user succeed has not cashed in any money yet", async () => {
+  it("[POST /orders] CASH_OUT Order creation should fail when user has not cashed in any money yet", async () => {
     const response = await request(app.getHttpServer()).post("/orders").send({
       userId: 1,
       instrumentId: 66,
@@ -367,6 +367,217 @@ describe("AppController (e2e)", () => {
     expect(response.body.size).toBe(10);
     expect(response.body.instrumentId).toBe(1);
     expect(response.body.price).toBe(260);
+    expect(response.body.userId).toBe(1);
+  });
+
+  it("[POST /orders] SELL MARKET Order creation should succeed when providing size parameter", async () => {
+    // Instrument with id = 1 has a close of 259
+    await createOrder({
+      userId: 1,
+      instrumentId: 1,
+      side: OrderSide.BUY,
+      type: OrderType.MARKET,
+      size: 10,
+      price: 259,
+      status: OrderStatus.FILLED,
+    });
+
+    const response = await request(app.getHttpServer()).post("/orders").send({
+      userId: 1,
+      instrumentId: 1,
+      side: OrderSide.SELL,
+      type: OrderType.MARKET,
+      size: 10,
+    });
+
+    expect(response.status).toBe(201);
+    expect(response.body.status).toBe(OrderStatus.FILLED);
+    expect(response.body.side).toBe(OrderSide.SELL);
+    expect(response.body.type).toBe(OrderType.MARKET);
+    expect(response.body.size).toBe(10);
+    expect(response.body.instrumentId).toBe(1);
+    expect(response.body.userId).toBe(1);
+  });
+
+  it("[POST /orders] SELL MARKET Order creation should fail for not having enough instrument size when providing size parameter", async () => {
+    // Instrument with id = 1 has a close of 259
+    await createOrder({
+      userId: 1,
+      instrumentId: 1,
+      side: OrderSide.BUY,
+      type: OrderType.MARKET,
+      size: 10,
+      price: 259,
+      status: OrderStatus.FILLED,
+    });
+
+    const response = await request(app.getHttpServer()).post("/orders").send({
+      userId: 1,
+      instrumentId: 1,
+      side: OrderSide.SELL,
+      type: OrderType.MARKET,
+      size: 11,
+    });
+
+    expect(response.status).toBe(201);
+    expect(response.body.status).toBe(OrderStatus.REJECTED);
+    expect(response.body.side).toBe(OrderSide.SELL);
+    expect(response.body.type).toBe(OrderType.MARKET);
+    expect(response.body.size).toBe(11);
+    expect(response.body.instrumentId).toBe(1);
+    expect(response.body.userId).toBe(1);
+  });
+
+  it("[POST /orders] SELL MARKET Order creation should succeed when providing totalInvestment parameter", async () => {
+    // Instrument with id = 1 has a close of 259
+    await createOrder({
+      userId: 1,
+      instrumentId: 1,
+      side: OrderSide.BUY,
+      type: OrderType.MARKET,
+      size: 10,
+      price: 259,
+      status: OrderStatus.FILLED,
+    });
+
+    const response = await request(app.getHttpServer()).post("/orders").send({
+      userId: 1,
+      instrumentId: 1,
+      side: OrderSide.SELL,
+      type: OrderType.MARKET,
+      totalInvestment: 2590
+    });
+
+    expect(response.status).toBe(201);
+    expect(response.body.status).toBe(OrderStatus.FILLED);
+    expect(response.body.side).toBe(OrderSide.SELL);
+    expect(response.body.type).toBe(OrderType.MARKET);
+    expect(response.body.size).toBe(10);
+    expect(response.body.instrumentId).toBe(1);
+    expect(response.body.userId).toBe(1);
+  });
+
+  it("[POST /orders] SELL MARKET Order creation should fail for not having enough instrument size when providing totalInvestment parameter", async () => {
+    // Instrument with id = 1 has a close of 259
+    await createOrder({
+      userId: 1,
+      instrumentId: 1,
+      side: OrderSide.BUY,
+      type: OrderType.MARKET,
+      size: 10,
+      price: 259,
+      status: OrderStatus.FILLED,
+    });
+
+    const response = await request(app.getHttpServer()).post("/orders").send({
+      userId: 1,
+      instrumentId: 1,
+      side: OrderSide.SELL,
+      type: OrderType.MARKET,
+      totalInvestment: 3000
+    });
+
+    console.log(response.body)
+
+    expect(response.status).toBe(201);
+    expect(response.body.status).toBe(OrderStatus.REJECTED);
+    expect(response.body.side).toBe(OrderSide.SELL);
+    expect(response.body.type).toBe(OrderType.MARKET);
+    expect(response.body.size).toBe(11);
+    expect(response.body.instrumentId).toBe(1);
+    expect(response.body.userId).toBe(1);
+  });
+
+  it("[POST /orders] SELL LIMIT Order creation should succeed when providing size parameters", async () => {
+    // Instrument with id = 1 has a close of 259
+    await createOrder({
+      userId: 1,
+      instrumentId: 1,
+      side: OrderSide.BUY,
+      type: OrderType.LIMIT,
+      size: 1000,
+      price: 259,
+      status: OrderStatus.FILLED,
+    });
+
+    const response = await request(app.getHttpServer()).post("/orders").send({
+      userId: 1,
+      instrumentId: 1,
+      side: OrderSide.SELL,
+      type: OrderType.LIMIT,
+      size: 1000,
+      price: 260,
+    });
+
+    expect(response.status).toBe(201);
+    expect(response.body.status).toBe(OrderStatus.NEW);
+    expect(response.body.side).toBe(OrderSide.SELL);
+    expect(response.body.type).toBe(OrderType.LIMIT);
+    expect(response.body.size).toBe(1000);
+    expect(response.body.price).toBe(260);
+    expect(response.body.instrumentId).toBe(1);
+    expect(response.body.userId).toBe(1);
+  });
+
+  it("[POST /orders] SELL LIMIT Order creation should fail for not having enough instrument size when providing size parameters", async () => {
+    // Instrument with id = 1 has a close of 259
+    await createOrder({
+      userId: 1,
+      instrumentId: 1,
+      side: OrderSide.BUY,
+      type: OrderType.LIMIT,
+      size: 1000,
+      price: 259,
+      status: OrderStatus.FILLED,
+    });
+
+    const response = await request(app.getHttpServer()).post("/orders").send({
+      userId: 1,
+      instrumentId: 1,
+      side: OrderSide.SELL,
+      type: OrderType.LIMIT,
+      size: 1001,
+      price: 260,
+    });
+
+    expect(response.status).toBe(201);
+    expect(response.body.status).toBe(OrderStatus.REJECTED);
+    expect(response.body.side).toBe(OrderSide.SELL);
+    expect(response.body.type).toBe(OrderType.LIMIT);
+    expect(response.body.size).toBe(1001);
+    expect(response.body.price).toBe(260);
+    expect(response.body.instrumentId).toBe(1);
+    expect(response.body.userId).toBe(1);
+  });
+
+  it("[POST /orders] SELL LIMIT Order creation should succeed when providing totalInvestment parameters", async () => {
+    // Instrument with id = 1 has a close of 259
+    await createOrder({
+      userId: 1,
+      instrumentId: 1,
+      side: OrderSide.BUY,
+      type: OrderType.LIMIT,
+      size: 1000,
+      price: 259,
+      status: OrderStatus.FILLED,
+    });
+
+    const response = await request(app.getHttpServer()).post("/orders").send({
+      userId: 1,
+      instrumentId: 1,
+      side: OrderSide.SELL,
+      type: OrderType.LIMIT,
+      totalInvestment: 2600,
+      price: 260,
+    });
+
+    expect(response.status).toBe(201);
+    expect(response.body.status).toBe(OrderStatus.NEW);
+    expect(response.body.side).toBe(OrderSide.SELL);
+    expect(response.body.type).toBe(OrderType.LIMIT);
+    expect(response.body.size).toBe(10);
+    expect(response.body.price).toBe(260);
+    expect(response.body.instrumentId).toBe(1);
     expect(response.body.userId).toBe(1);
   });
 });

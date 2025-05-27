@@ -83,8 +83,10 @@ export class OrdersService {
       case OrderSide.CASH_OUT:
         return this.createCashOutOrder({
           userId: parameters.userId,
-          size: (parameters.size ?? sizeFromTotalInvestment)!!,
+          size: parameters.size,
           instrument,
+          totalInvestment: parameters.totalInvestment,
+          type: parameters.type
         });
       case OrderSide.BUY:
         return this.createBuyOrder({
@@ -144,12 +146,10 @@ export class OrdersService {
       status: OrderStatus.FILLED,
     });
 
-    console.log(`Created cash in order: ${JSON.stringify(createdOrder)}`);
-
     return createdOrder;
   }
 
-  private async createCashOutOrder(parameters: CreateCashOutOrderParameters) {
+  private async createCashOutOrder(parameters: CreateOrderParameters) {
     if (parameters.instrument.type !== InstrumentType.MONEDA) {
       throw new BadRequestException(
         `Instrument with id: ${parameters.instrument.id} is not a currency`,
@@ -160,21 +160,15 @@ export class OrdersService {
       parameters.userId,
     );
 
-    console.log(
-      `User balance for userId ${parameters.userId}: ${JSON.stringify(
-        userBalance,
-      )}`,
-    );
-
     const createdOrder = await this.ordersRepository.createOrder({
       instrumentId: parameters.instrument.id,
       userId: parameters.userId,
-      size: parameters.size,
+      size: parameters.size!!,
       price: parameters.instrument.close,
       type: OrderType.MARKET,
       side: OrderSide.CASH_OUT,
       status:
-        userBalance.value < parameters.size * parameters.instrument.close
+        userBalance.value < parameters.size!! * parameters.instrument.close
           ? OrderStatus.REJECTED
           : OrderStatus.FILLED,
     });
@@ -182,12 +176,13 @@ export class OrdersService {
     return createdOrder;
   }
 
-  private async createBuyOrder(parameters: CreateBuyOrderParameters) {
+  private async createBuyOrder(parameters: CreateOrderParameters) {
     if (parameters.instrument.type !== InstrumentType.ACCIONES) {
       throw new BadRequestException(
         `Instrument with id: ${parameters.instrument.id} is not a stock`,
       );
     }
+    
     const userBalance = await this.portfoliosRepository.getUserBalance(
       parameters.userId,
     );
@@ -313,7 +308,7 @@ export class OrdersService {
         size: size,
         price: parameters.instrument.close,
         type: OrderType.LIMIT,
-        side: OrderSide.BUY,
+        side: OrderSide.SELL,
         status:
           userPortfolio.assets[0].quantity < size
             ? OrderStatus.REJECTED
