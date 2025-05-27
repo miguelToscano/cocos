@@ -286,26 +286,28 @@ INSERT INTO "orders" (instrument_id,user_id,size,price,side,status,type,datetime
   (54,1,500,250,'BUY','FILLED','MARKET','2023-07-13 14:11:20'),
   (31,1,30,1530,'SELL','FILLED','MARKET','2023-07-13 15:13:20');
 
+SET synchronous_commit = 'off';
+
 INSERT INTO instruments (ticker, name, type)
 select
 	'ABC' || generate_series::text as ticker,
 	'ABC ' || generate_series::text || ' S.A.' as name,
 	'ACCIONES' as type
-from generate_series(1, 10000, 1);
+from generate_series(1, 1000, 1);
 
 INSERT INTO instruments (ticker, name, type)
 select
 	'DEF' || generate_series::text as ticker,
 	'DEF ' || generate_series::text || ' S.A.' as name,
 	'ACCIONES' as type
-from generate_series(1, 10000, 1);
+from generate_series(0, 1000, 1);
 
 INSERT INTO instruments (ticker, name, type)
 select
 	'GHI' || generate_series::text as ticker,
 	'GHI ' || generate_series::text || ' S.A.' as name,
 	'ACCIONES' as type
-from generate_series(1, 10000, 1);
+from generate_series(0, 1000, 1);
 
 INSERT INTO orders (instrument_id, user_id, size, price, type, side, status)
 select
@@ -316,7 +318,7 @@ select
 	'MARKET' as type,
 	'CASH_IN' as side,
 	'FILLED' as status
-from generate_series(1, 10000, 1);
+from generate_series(1, 1000, 1);
 
 INSERT INTO orders (instrument_id, user_id, size, price, type, side, status)
 select
@@ -327,7 +329,16 @@ select
 	'MARKET' as type,
 	'CASH_IN' as side,
 	'FILLED' as status
-from generate_series(1, 5000, 1);
+from generate_series(1, 2000, 1);
 
+INSERT INTO users (email, account_number)
+select
+    'email' || generate_series::text || '@test.com' as email,
+    '10000' || generate_series::text as account_number
+from generate_series(1, 1000, 1);
+
+SET synchronous_commit = 'on';
+
+SELECT pg_prewarm('users');
 SELECT pg_prewarm('orders');
 SELECT pg_prewarm('instruments');

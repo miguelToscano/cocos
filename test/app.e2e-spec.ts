@@ -77,8 +77,6 @@ describe("AppController (e2e)", () => {
       totalInvestment: 1000,
     });
 
-    console.log(response.body);
-
     expect(response.status).toBe(400);
   });
 
@@ -105,8 +103,6 @@ describe("AppController (e2e)", () => {
       totalInvestment: 1000,
     });
 
-    console.log(response.body);
-
     expect(response.status).toBe(400);
   });
 
@@ -119,8 +115,6 @@ describe("AppController (e2e)", () => {
       size: 10,
       totalInvestment: 1000,
     });
-
-    console.log(response.body);
 
     expect(response.status).toBe(400);
   });
@@ -202,8 +196,6 @@ describe("AppController (e2e)", () => {
       status: OrderStatus.FILLED,
     });
 
-    console.log(a);
-
     const response = await request(app.getHttpServer()).post("/orders").send({
       userId: 1,
       instrumentId: 66,
@@ -279,7 +271,6 @@ describe("AppController (e2e)", () => {
     });
 
     expect(response.status).toBe(201);
-    console.log(response.body);
     expect(response.body.status).toBe(OrderStatus.FILLED);
     expect(response.body.side).toBe(OrderSide.BUY);
     expect(response.body.type).toBe(OrderType.MARKET);
@@ -309,7 +300,6 @@ describe("AppController (e2e)", () => {
     });
 
     expect(response.status).toBe(201);
-    console.log(response.body);
     expect(response.body.status).toBe(OrderStatus.FILLED);
     expect(response.body.side).toBe(OrderSide.BUY);
     expect(response.body.type).toBe(OrderType.MARKET);
@@ -336,11 +326,10 @@ describe("AppController (e2e)", () => {
       side: OrderSide.BUY,
       type: OrderType.LIMIT,
       size: 10,
-      price: 260
+      price: 260,
     });
 
     expect(response.status).toBe(201);
-    console.log(response.body);
     expect(response.body.status).toBe(OrderStatus.NEW);
     expect(response.body.side).toBe(OrderSide.BUY);
     expect(response.body.type).toBe(OrderType.LIMIT);
@@ -368,11 +357,10 @@ describe("AppController (e2e)", () => {
       side: OrderSide.BUY,
       type: OrderType.LIMIT,
       totalInvestment: 2600,
-      price: 260
+      price: 260,
     });
 
     expect(response.status).toBe(201);
-    console.log(response.body);
     expect(response.body.status).toBe(OrderStatus.NEW);
     expect(response.body.side).toBe(OrderSide.BUY);
     expect(response.body.type).toBe(OrderType.LIMIT);
