@@ -52,10 +52,7 @@ export class CreateOrderRequestDto {
   @Type(() => Number)
   @IsNumber()
   @IsPositive()
-  @ValidateIf(
-    (o) =>
-      o.type === OrderType.LIMIT
-  )
+  @ValidateIf((o) => o.type === OrderType.LIMIT)
   price?: number;
 
   @Type(() => Number)

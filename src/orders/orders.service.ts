@@ -144,6 +144,8 @@ export class OrdersService {
       status: OrderStatus.FILLED,
     });
 
+    console.log(`Created cash in order: ${JSON.stringify(createdOrder)}`);
+
     return createdOrder;
   }
 
@@ -156,6 +158,12 @@ export class OrdersService {
 
     const userBalance = await this.portfoliosRepository.getUserBalance(
       parameters.userId,
+    );
+
+    console.log(
+      `User balance for userId ${parameters.userId}: ${JSON.stringify(
+        userBalance,
+      )}`,
     );
 
     const createdOrder = await this.ordersRepository.createOrder({

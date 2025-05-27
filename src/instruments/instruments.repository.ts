@@ -4,10 +4,11 @@ import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { QueryTypes } from "sequelize";
 import { InstrumentWithPrice } from "./domain/aggregates/instrument-price";
 import { InstrumentType } from "./domain/enums/instrument-type.enum";
+import { z } from "zod";
 
 @Injectable()
 export class InstrumentsRepository {
-  constructor(private readonly sequelize: Sequelize) {}
+  constructor(private readonly database: Sequelize) {}
 
   /**
    * Retrieves a paginated list of assets from the instruments table.
@@ -24,7 +25,7 @@ export class InstrumentsRepository {
     limit: number;
     offset: number;
   }): Promise<{ instruments: Instrument[]; count: number }> {
-    const result = await this.sequelize.query<{
+    const result = await this.database.query<{
       instruments: Instrument[];
       count: number;
     }>(
@@ -82,7 +83,7 @@ export class InstrumentsRepository {
     offset: number;
   }): Promise<{ instruments: Instrument[]; count: number }> {
     try {
-      const result = await this.sequelize.query<{
+      const result = await this.database.query<{
         instruments: Instrument[];
         count: number;
       }>(
@@ -146,7 +147,7 @@ export class InstrumentsRepository {
    */
   async getInstrumentWithPrice(id: number): Promise<InstrumentWithPrice> {
     try {
-      const instrument = await this.sequelize.query<InstrumentWithPrice>(
+      const instrument = await this.database.query<InstrumentWithPrice>(
         `
           SELECT 
             id,
@@ -177,7 +178,11 @@ export class InstrumentsRepository {
         },
       );
 
-      return instrument as InstrumentWithPrice;
+      return {
+        ...instrument,
+        close: parseFloat(String(instrument?.close ?? 0)),
+        previousClose: parseFloat(String(instrument?.previousClose ?? 0)),
+      } as InstrumentWithPrice;
     } catch (error) {
       throw new InternalServerErrorException(error.message);
     }

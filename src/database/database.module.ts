@@ -1,6 +1,5 @@
 import { Global, Module } from "@nestjs/common";
 import { SequelizeModule } from "@nestjs/sequelize";
-import { DatabaseService } from "./database.service";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 
 @Global()
@@ -26,7 +25,6 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
       }),
     }),
   ],
-  providers: [DatabaseService],
-  exports: [SequelizeModule, DatabaseService],
+  exports: [SequelizeModule],
 })
 export class DatabaseModule {}

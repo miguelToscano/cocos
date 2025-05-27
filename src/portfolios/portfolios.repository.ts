@@ -8,10 +8,10 @@ import { Balance, Portfolio } from "./domain/aggregates/portfolio.aggregate";
 
 @Injectable()
 export class PortfoliosRepository {
-  constructor(private readonly sequelize: Sequelize) {}
+  constructor(private readonly database: Sequelize) {}
 
   async getUserPortfolio(userId: number, instrumentId?: number) {
-    const userPortfolio = await this.sequelize.query<Portfolio>(
+    const userPortfolio = await this.database.query<Portfolio>(
       `
             WITH assets AS (
               SELECT
@@ -83,12 +83,23 @@ export class PortfoliosRepository {
       },
     );
 
-    return userPortfolio as Portfolio;
+    return {
+      ...userPortfolio,
+      balance: {
+        value: parseFloat(String(userPortfolio?.balance.value ?? 0)),
+        currency: userPortfolio?.balance.currency,
+      },
+      assets:
+        userPortfolio?.assets.map((asset) => ({
+          ...asset,
+          currentValue: parseFloat(String(asset.currentValue ?? 0)),
+        })) || [],
+    } as Portfolio;
   }
 
   async getUserBalance(userId: number) {
     try {
-      const userBalance = await this.sequelize.query<Balance>(
+      const userBalance = await this.database.query<Balance>(
         `
         SELECT 
             COALESCE(SUM(o.price * o.size) FILTER (WHERE o.side IN ('${OrderSide.CASH_IN}', '${OrderSide.SELL}')), 0) -
@@ -111,7 +122,10 @@ export class PortfoliosRepository {
         },
       );
 
-      return userBalance as Balance;
+      return {
+        ...userBalance,
+        value: parseFloat(String(userBalance?.value ?? 0)),
+      } as Balance;
     } catch (error) {
       throw error;
     }

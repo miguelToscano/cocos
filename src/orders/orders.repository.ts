@@ -10,14 +10,14 @@ export type CreateOrderParameters = Pick<
 
 @Injectable()
 export class OrdersRepository {
-  constructor(private readonly sequelize: Sequelize) {}
+  constructor(private readonly database: Sequelize) {}
 
   async createOrder(parameter: CreateOrderParameters): Promise<Order> {
-    const createdOrder = await this.sequelize.query<Order>(
+    const createdOrder = await this.database.query<Order>(
       `
         INSERT INTO orders (instrument_id, user_id, size, price, type, side, status)
         VALUES (:instrumentId, :userId, :size, :price, :type, :side, :status)
-        RETURNING *
+        RETURNING id, instrument_id AS "instrumentId", user_id AS "userId", size, price, type, side, status
       `,
       {
         type: QueryTypes.SELECT,
@@ -34,6 +34,10 @@ export class OrdersRepository {
       },
     );
 
-    return createdOrder as Order;
+    return {
+      ...createdOrder,
+      size: parseFloat(String(createdOrder?.size ?? 0)),
+      price: parseFloat(String(createdOrder?.price ?? 0)),
+    } as Order;
   }
 }
