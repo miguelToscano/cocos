@@ -47,3 +47,5 @@ npm run test:e2e
 - Las consultas a la base de datos deberian mapearse a modelos de ORM para asegurar la integridad de sus tipos.
 - Priorice 100% la performance de la aplicacion por lo cual opte por usar raw SQL para tener el mayor control posible sobre las consultas y sus planes de ejecucion, logrando asi poder soportar una gran cantidad de datos sin problemas.
 - Cree indices necesarios en las tablas para mejorar la performance de las consultas (Incluyendo optimizaciones para busqueda de texto).
+- Si bien en todos los endpoints se envia `userId`, este dato deberia obtenerse a traves de la autenticacion del cliente.
+  
