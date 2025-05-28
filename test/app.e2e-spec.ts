@@ -80,6 +80,18 @@ describe("AppController (e2e)", () => {
     expect(response.status).toBe(400);
   });
 
+  it('[POST /orders] CASH_IN Order creation should fail when instrument is not a currency', async () => {
+    const response = await request(app.getHttpServer()).post("/orders").send({
+      userId: 1,
+      instrumentId: 1,
+      side: "CASH_IN",
+      type: "MARKET",
+      size: 10
+    });
+
+    expect(response.status).toBe(400);
+  });
+
   it("[POST /orders] CASH_OUT Order creation should fail when providing both size and totalInvestment parameters ", async () => {
     const response = await request(app.getHttpServer()).post("/orders").send({
       userId: 1,
@@ -96,11 +108,23 @@ describe("AppController (e2e)", () => {
   it("[POST /orders] BUY MARKET Order creation should fail when providing both size and totalInvestment parameters ", async () => {
     const response = await request(app.getHttpServer()).post("/orders").send({
       userId: 1,
-      instrumentId: 66,
+      instrumentId: 1,
       side: "BUY",
       type: "MARKET",
       size: 10,
       totalInvestment: 1000,
+    });
+
+    expect(response.status).toBe(400);
+  });
+
+  it("[POST /orders] BUY MARKET Order creation should fail when instrument is not a stock", async () => {
+    const response = await request(app.getHttpServer()).post("/orders").send({
+      userId: 1,
+      instrumentId: 66,
+      side: "BUY",
+      type: "MARKET",
+      size: 10,
     });
 
     expect(response.status).toBe(400);
@@ -114,6 +138,18 @@ describe("AppController (e2e)", () => {
       type: "LIMIT",
       size: 10,
       totalInvestment: 1000,
+    });
+
+    expect(response.status).toBe(400);
+  });
+
+  it("[POST /orders] BUY by LIMIT order creation should fail  when instrument is not a stock", async () => {
+    const response = await request(app.getHttpServer()).post("/orders").send({
+      userId: 1,
+      instrumentId: 66,
+      side: "BUY",
+      type: "LIMIT",
+      size: 10
     });
 
     expect(response.status).toBe(400);
