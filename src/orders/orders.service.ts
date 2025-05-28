@@ -63,13 +63,13 @@ export class OrdersService {
       );
     }
 
-    const sizeFromTotalInvestment =
+const size =
       !parameters.size && parameters.totalInvestment
         ? this.getSizeFromTotalInvestment(
             parameters.totalInvestment,
             instrument,
           )
-        : null;
+        : parameters.size!!;
 
     switch (parameters.side) {
       case OrderSide.CASH_IN:
@@ -113,12 +113,12 @@ export class OrdersService {
   private getSizeFromTotalInvestment(
     totalInvestment: number,
     instrument: InstrumentWithPrice,
-  ): number {
+  ) {
     if (instrument.type === InstrumentType.MONEDA)
       return totalInvestment / instrument.close;
     if (instrument.type === InstrumentType.ACCIONES)
       return Math.floor(totalInvestment / instrument.close);
-    throw new Error();
+    return 1;
   }
 
   private async createCashInOrder(parameters: CreateOrderParameters) {
@@ -160,6 +160,14 @@ export class OrdersService {
       parameters.userId,
     );
 
+    const size =
+      !parameters.size && parameters.totalInvestment
+        ? this.getSizeFromTotalInvestment(
+            parameters.totalInvestment,
+            parameters.instrument,
+          )
+        : parameters.size!!;
+
     const createdOrder = await this.ordersRepository.createOrder({
       instrumentId: parameters.instrument.id,
       userId: parameters.userId,
@@ -168,7 +176,7 @@ export class OrdersService {
       type: OrderType.MARKET,
       side: OrderSide.CASH_OUT,
       status:
-        userBalance.value < parameters.size!! * parameters.instrument.close
+        userBalance.value < size * parameters.instrument.close
           ? OrderStatus.REJECTED
           : OrderStatus.FILLED,
     });
@@ -231,11 +239,11 @@ export class OrdersService {
         instrumentId: parameters.instrument.id,
         userId: parameters.userId,
         size: size,
-        price: parameters.instrument.close,
+        price: parameters.price!!,
         type: OrderType.LIMIT,
         side: OrderSide.BUY,
         status:
-          userBalance.value < size * parameters.instrument.close
+          userBalance.value < size * parameters.price!!
             ? OrderStatus.REJECTED
             : OrderStatus.NEW,
       });
@@ -306,7 +314,7 @@ export class OrdersService {
         instrumentId: parameters.instrument.id,
         userId: parameters.userId,
         size: size,
-        price: parameters.instrument.close,
+        price: parameters.price!!,
         type: OrderType.LIMIT,
         side: OrderSide.SELL,
         status:

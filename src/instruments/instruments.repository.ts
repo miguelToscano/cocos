@@ -156,7 +156,7 @@ export class InstrumentsRepository {
             type,
             close,
             COALESCE(latest_value.close, 1) AS close,
-            COALESCE(latest_value.previous_close,1) AS "previousClose"
+            COALESCE(latest_value.previous_close, 1) AS "previousClose"
           FROM instruments i
           LEFT JOIN LATERAL (
             SELECT 
