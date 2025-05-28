@@ -110,8 +110,9 @@ export class InstrumentsRepository {
               WHERE 
                 ticker = :search
                 OR name = :search
-                OR textsearchable_trgm_index_col ILIKE :fuzzySearch
-                OR textsearchable_index_col @@ to_tsquery(:tsQuerySearch)
+                OR (ticker || ' ' || name) ILIKE :fuzzySearch
+                OR to_tsvector(ticker || ' ' || name) @@ to_tsquery(:tsQuerySearch)
+                OR to_tsvector(name) @@ to_tsquery(:tsQuerySearch)
               ORDER BY ticker ASC, name ASC
               LIMIT :limit
               OFFSET :offset
