@@ -54,7 +54,6 @@ INSERT INTO users (email, account_number) VALUES
    ('jose@test.com','10002'),
    ('francisco@test.com','10003'),
    ('juan@test.com','10004'),
-   ('toscano@test.com','10005'),
    ('miguel@test.com','10006');
 
 INSERT INTO instruments (ticker,"name","type") VALUES
@@ -317,23 +316,28 @@ select
 	'MARKET' as type,
 	'CASH_IN' as side,
 	'FILLED' as status
+from generate_series(1, 10000, 1);
+
+INSERT INTO orders (instrument_id, user_id, size, price, type, side, status)
+select
+	2 as instrumentid,
+	5 as userid,
+	1 as size,
+	1 as price,
+	'MARKET' as type,
+	'BUY' as side,
+	'FILLED' as status
 from generate_series(1, 1000, 1);
 
 INSERT INTO orders (instrument_id, user_id, size, price, type, side, status)
 select
-	66 as instrumentid,
-	6 as userid,
-	100 as size,
+	1 as instrumentid,
+	5 as userid,
+	1 as size,
 	1 as price,
 	'MARKET' as type,
-	'CASH_IN' as side,
+	'BUY' as side,
 	'FILLED' as status
-from generate_series(1, 2000, 1);
-
-INSERT INTO users (email, account_number)
-select
-    'email' || generate_series::text || '@test.com' as email,
-    '10000' || generate_series::text as account_number
 from generate_series(1, 1000, 1);
 
 SET synchronous_commit = 'on';
