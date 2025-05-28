@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { QueryTypes } from "sequelize";
 import { Sequelize } from "sequelize-typescript";
 import { InstrumentType } from "../instruments/domain/enums/instrument-type.enum";
@@ -10,9 +10,23 @@ import { Balance, Portfolio } from "./domain/aggregates/portfolio.aggregate";
 export class PortfoliosRepository {
   constructor(private readonly database: Sequelize) {}
 
+  /**
+   * Retrieves the portfolio information for a specific user, optionally filtered by instrument.
+   *
+   * This method queries the database to obtain the user's current balance and a list of assets,
+   * including details such as ticker, name, quantity, current value, and daily yield for each asset.
+   * The balance is calculated based on the user's filled orders, and asset information is aggregated
+   * from the user's holdings in "ACCIONES" type instruments.
+   *
+   * @param userId - The unique identifier of the user whose portfolio is being retrieved.
+   * @param instrumentId - (Optional) The unique identifier of a specific instrument to filter the assets.
+   * @returns A promise that resolves to a `Portfolio` object containing the user's balance and assets.
+   * @throws {InternalServerErrorException} if a database or query error occurs.
+   */
   async getUserPortfolio(userId: number, instrumentId?: number) {
-    const userPortfolio = await this.database.query<Portfolio>(
-      `
+    try {
+      const userPortfolio = await this.database.query<Portfolio>(
+        `
             WITH assets AS (
               SELECT
                   o.user_id,
@@ -73,30 +87,44 @@ export class PortfoliosRepository {
           ) AS user_assets ON TRUE
           WHERE u.id = :userId
           `,
-      {
-        type: QueryTypes.SELECT,
-        plain: true,
-        replacements: {
-          userId,
-          instrumentId,
+        {
+          type: QueryTypes.SELECT,
+          plain: true,
+          replacements: {
+            userId,
+            instrumentId,
+          },
         },
-      },
-    );
+      );
 
-    return {
-      ...userPortfolio,
-      balance: {
-        value: parseFloat(String(userPortfolio?.balance.value ?? 0)),
-        currency: userPortfolio?.balance.currency,
-      },
-      assets:
-        userPortfolio?.assets.map((asset) => ({
-          ...asset,
-          currentValue: parseFloat(String(asset.currentValue ?? 0)),
-        })) || [],
-    } as Portfolio;
+      return {
+        ...userPortfolio,
+        balance: {
+          value: parseFloat(String(userPortfolio?.balance.value ?? 0)),
+          currency: userPortfolio?.balance.currency,
+        },
+        assets:
+          userPortfolio?.assets.map((asset) => ({
+            ...asset,
+            currentValue: parseFloat(String(asset.currentValue ?? 0)),
+          })) || [],
+      } as Portfolio;
+    } catch (error) {
+      throw new InternalServerErrorException(error.message);
+    }
   }
 
+  /**
+   * Retrieves the balance for a specific user by calculating the net value of their orders.
+   *
+   * The balance is computed as the sum of all 'CASH_IN' and 'SELL' order values minus
+   * the sum of all 'CASH_OUT' and 'BUY' order values, filtered by orders with status 'FILLED'.
+   * The result is returned as a `Balance` object with the value in ARS currency.
+   *
+   * @param userId - The unique identifier of the user whose balance is to be retrieved.
+   * @returns A promise that resolves to a `Balance` object containing the user's balance and currency.
+   * @throws {InternalServerErrorException} If an error occurs during the database query.
+   */
   async getUserBalance(userId: number) {
     try {
       const userBalance = await this.database.query<Balance>(
@@ -127,7 +155,7 @@ export class PortfoliosRepository {
         value: parseFloat(String(userBalance?.value ?? 0)),
       } as Balance;
     } catch (error) {
-      throw error;
+      throw new InternalServerErrorException(error.message);
     }
   }
 }

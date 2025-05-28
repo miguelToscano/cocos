@@ -11,12 +11,15 @@ export class InstrumentsRepository {
   constructor(private readonly database: Sequelize) {}
 
   /**
-   * Retrieves a paginated list of assets from the instruments table.
+   * Retrieves a paginated list of instruments from the database along with the total count.
    *
-   * @param params - The pagination parameters.
-   * @param params.limit - The maximum number of assets to return.
-   * @param params.offset - The number of assets to skip.
-   * @returns An object containing the array of assets and the total count.
+   * @param params - An object containing pagination parameters.
+   * @param params.limit - The maximum number of instruments to retrieve.
+   * @param params.offset - The number of instruments to skip before starting to collect the result set.
+   * @returns A promise that resolves to an object containing:
+   *   - `instruments`: An array of `Instrument` objects.
+   *   - `count`: The total number of instruments available.
+   * @throws {InternalServerErrorException} If a database error occurs.
    */
   async getInstruments({
     limit,
@@ -25,11 +28,12 @@ export class InstrumentsRepository {
     limit: number;
     offset: number;
   }): Promise<{ instruments: Instrument[]; count: number }> {
-    const result = await this.database.query<{
-      instruments: Instrument[];
-      count: number;
-    }>(
-      `
+    try {
+      const result = await this.database.query<{
+        instruments: Instrument[];
+        count: number;
+      }>(
+        `
         WITH matches AS (
               SELECT 
                 id,
@@ -52,30 +56,38 @@ export class InstrumentsRepository {
           MAX(count)::int AS count
         FROM matches m
       `,
-      {
-        type: QueryTypes.SELECT,
-        plain: true,
-        replacements: {
-          limit,
-          offset,
+        {
+          type: QueryTypes.SELECT,
+          plain: true,
+          replacements: {
+            limit,
+            offset,
+          },
         },
-      },
-    );
+      );
 
-    return {
-      instruments: result?.instruments ?? ([] as Instrument[]),
-      count: result?.count ?? 0,
-    };
+      return {
+        instruments: result?.instruments ?? ([] as Instrument[]),
+        count: result?.count ?? 0,
+      };
+    } catch (error) {
+      throw new InternalServerErrorException(error.message);
+    }
   }
 
   /**
-   * Searches for assets by name using a case-insensitive match, with pagination.
+   * Searches for instruments in the database based on the provided parameters.
    *
-   * @param params - The search and pagination parameters.
-   * @param params.search - The search string to filter asset names.
-   * @param params.limit - The maximum number of assets to return.
-   * @param params.offset - The number of assets to skip.
-   * @returns An object containing the array of matching assets and the total count.
+   * This method performs a search using exact matches on the `ticker` and `name` fields,
+   * as well as fuzzy and full-text search on indexed columns. Results are paginated
+   * using the specified `limit` and `offset` values.
+   *
+   * @param parameters - The search parameters.
+   * @param parameters.search - The search string to match against instrument fields.
+   * @param parameters.limit - The maximum number of instruments to return.
+   * @param parameters.offset - The number of instruments to skip before starting to collect the result set.
+   * @returns An object containing the list of matching instruments and the total count.
+   * @throws {InternalServerErrorException} If a database error occurs during the search.
    */
   async searchInstruments(parameters: {
     search: string;
@@ -140,10 +152,16 @@ export class InstrumentsRepository {
   }
 
   /**
-   * Retrieves a single asset by its unique identifier.
+   * Retrieves an instrument by its ID along with its latest price information.
    *
-   * @param id - The unique identifier of the asset.
-   * @returns The asset if found, otherwise null.
+   * Executes a SQL query to fetch the instrument's details and its most recent market data,
+   * including the latest close and previous close prices. If no market data is available,
+   * default values are used. The method returns the instrument data with price fields
+   * parsed as floating-point numbers.
+   *
+   * @param id - The unique identifier of the instrument to retrieve.
+   * @returns A promise that resolves to an `InstrumentWithPrice` object containing the instrument's details and price information.
+   * @throws {InternalServerErrorException} If an error occurs during the database query.
    */
   async getInstrumentWithPrice(id: number): Promise<InstrumentWithPrice> {
     try {

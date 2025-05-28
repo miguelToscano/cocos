@@ -14,27 +14,11 @@ import { InstrumentType } from "../instruments/domain/enums/instrument-type.enum
 import { InstrumentWithPrice } from "../instruments/domain/aggregates/instrument-price";
 import { OrderStatus } from "./domain/enums/order-status.enum";
 
-type CreateCashInOrderParameters = Pick<Order, "size" | "userId"> & {
-  instrument: InstrumentWithPrice;
-};
-
-type CreateCashOutOrderParameters = Pick<Order, "size" | "userId"> & {
-  instrument: InstrumentWithPrice;
-};
-
-type CreateBuyOrderParameters = Pick<Order, "userId" | "type"> &
-  Partial<Pick<Order, "size" | "price">> & {
-    totalInvestment?: number;
-    instrument: InstrumentWithPrice;
-  };
-
 type CreateOrderParameters = Pick<Order, "userId" | "type"> &
   Partial<Pick<Order, "size" | "price">> & {
     totalInvestment?: number;
     instrument: InstrumentWithPrice;
   };
-
-class CreateSellOrderParameters {}
 
 @Injectable()
 export class OrdersService {
@@ -44,6 +28,23 @@ export class OrdersService {
     private readonly portfoliosRepository: PortfoliosRepository,
   ) {}
 
+  /**
+   * Creates a new order based on the provided parameters.
+   *
+   * This method determines the order type and delegates the creation to the appropriate handler
+   * (cash in, cash out, buy, or sell). It first retrieves the instrument with its current price,
+   * validates its existence, and calculates the order size if not explicitly provided but a total investment is given.
+   *
+   * @param parameters - The parameters required to create an order.
+   * @param parameters.userId - The ID of the user placing the order.
+   * @param parameters.instrumentId - The ID of the instrument to trade.
+   * @param parameters.side - The side of the order (e.g., BUY, SELL, CASH_IN, CASH_OUT).
+   * @param parameters.type - The type of the order.
+   * @param parameters.size - (Optional) The size of the order.
+   * @param parameters.price - (Optional) The price for the order.
+   * @param parameters.totalInvestment - (Optional) The total investment amount for the order.
+   * @returns The result of the order creation or a NotFoundException if the instrument does not exist.
+   */
   async createOrder(parameters: {
     userId: number;
     instrumentId: number;
@@ -63,14 +64,6 @@ export class OrdersService {
       );
     }
 
-const size =
-      !parameters.size && parameters.totalInvestment
-        ? this.getSizeFromTotalInvestment(
-            parameters.totalInvestment,
-            instrument,
-          )
-        : parameters.size!!;
-
     switch (parameters.side) {
       case OrderSide.CASH_IN:
         return this.createCashInOrder({
@@ -86,7 +79,7 @@ const size =
           size: parameters.size,
           instrument,
           totalInvestment: parameters.totalInvestment,
-          type: parameters.type
+          type: parameters.type,
         });
       case OrderSide.BUY:
         return this.createBuyOrder({
@@ -110,10 +103,21 @@ const size =
     }
   }
 
+  /**
+   * Calculates the size (quantity) of an instrument that can be purchased with a given total investment.
+   *
+   * - For instruments of type `MONEDA`, returns the exact division of the investment by the instrument's closing price.
+   * - For instruments of type `ACCIONES`, returns the floored division (whole units only).
+   * - For other instrument types, returns 1.
+   *
+   * @param totalInvestment - The total amount of money to invest.
+   * @param instrument - The instrument with its price and type information.
+   * @returns The calculated size (quantity) of the instrument to purchase.
+   */
   private getSizeFromTotalInvestment(
     totalInvestment: number,
     instrument: InstrumentWithPrice,
-  ) {
+  ): number {
     if (instrument.type === InstrumentType.MONEDA)
       return totalInvestment / instrument.close;
     if (instrument.type === InstrumentType.ACCIONES)
@@ -121,6 +125,18 @@ const size =
     return 1;
   }
 
+  /**
+   * Creates a cash-in order for a given instrument and user.
+   *
+   * This method validates that the provided instrument is of type `MONEDA` (currency).
+   * If the `size` parameter is not provided but `totalInvestment` is, it calculates the order size
+   * based on the total investment and instrument details. Otherwise, it uses the provided size.
+   * The order is created with type `MARKET`, side `CASH_IN`, and status `FILLED`.
+   *
+   * @param parameters - The parameters required to create the order, including instrument, user, size, and/or total investment.
+   * @throws {BadRequestException} If the instrument is not a currency.
+   * @returns A promise that resolves to the created order.
+   */
   private async createCashInOrder(parameters: CreateOrderParameters) {
     if (parameters.instrument.type !== InstrumentType.MONEDA) {
       throw new BadRequestException(
@@ -149,6 +165,18 @@ const size =
     return createdOrder;
   }
 
+  /**
+   * Creates a cash-out order for a user based on the provided parameters.
+   *
+   * This method validates that the instrument is a currency, calculates the order size
+   * if not explicitly provided, checks the user's balance, and creates a market order
+   * with the appropriate status (FILLED or REJECTED).
+   *
+   * @param parameters - The parameters required to create the order, including user ID,
+   *   instrument details, size, and/or total investment.
+   * @returns A promise that resolves to the created order.
+   * @throws {BadRequestException} If the instrument is not a currency.
+   */
   private async createCashOutOrder(parameters: CreateOrderParameters) {
     if (parameters.instrument.type !== InstrumentType.MONEDA) {
       throw new BadRequestException(
@@ -184,19 +212,30 @@ const size =
     return createdOrder;
   }
 
+  /**
+   * Creates a buy order for a given instrument and user, supporting both market and limit order types.
+   *
+   * - Validates that the instrument is a stock (`InstrumentType.ACCIONES`).
+   * - For market orders, calculates the size based on either the provided size or total investment.
+   * - For limit orders, uses the specified price and updates the instrument's close price accordingly.
+   * - Checks the user's balance to determine if the order should be filled, rejected, or set as new.
+   * - Returns the created order object.
+   *
+   * @param parameters - The parameters required to create the order, including user, instrument, order type, size, price, and total investment.
+   * @throws {BadRequestException} If the instrument is not a stock.
+   * @returns A promise that resolves to the created order.
+   */
   private async createBuyOrder(parameters: CreateOrderParameters) {
     if (parameters.instrument.type !== InstrumentType.ACCIONES) {
       throw new BadRequestException(
         `Instrument with id: ${parameters.instrument.id} is not a stock`,
       );
     }
-    
+
     const userBalance = await this.portfoliosRepository.getUserBalance(
       parameters.userId,
     );
 
-    // 1 - User creates a MARKET order type providing the quantity (size) of shares he wants to buy
-    // 2 - User creates a MARKET order type providing how much money (totalInvestment) he wants to spend
     if (parameters.type === OrderType.MARKET) {
       const size =
         !parameters.size && parameters.totalInvestment
@@ -222,8 +261,6 @@ const size =
       return createdOrder;
     }
 
-    // 3 - User creates a LIMIT order type providing the quantity (size) and price (price) he wants the order to be executed at
-    // 4 - User creates a LIMIT order type providing the totalInvestment (totalInvestment) and price (price) he wants the order to be executed at
     if (parameters.type === OrderType.LIMIT) {
       parameters.instrument.close = parameters.price!!;
 
@@ -252,6 +289,18 @@ const size =
     }
   }
 
+  /**
+   * Creates a sell order for a given instrument and user.
+   *
+   * This method validates that the instrument is a stock, checks if the user owns the instrument,
+   * and then creates either a market or limit sell order based on the provided parameters.
+   * The order status is determined by whether the user has enough quantity of the asset.
+   *
+   * @param parameters - The parameters required to create the sell order, including instrument, user, order type, size, and price.
+   * @throws {BadRequestException} If the instrument is not a stock.
+   * @throws {NotFoundException} If the instrument is not found in the user's portfolio.
+   * @returns The created order object.
+   */
   private async createSellOrder(parameters: CreateOrderParameters) {
     if (parameters.instrument.type !== InstrumentType.ACCIONES) {
       throw new BadRequestException(
@@ -270,8 +319,6 @@ const size =
       );
     }
 
-    // 1 - User creates a MARKET order type providing the quantity (size) of shares he wants to buy
-    // 2 - User creates a MARKET order type providing how much money (totalInvestment) he wants to spend
     if (parameters.type === OrderType.MARKET) {
       const size =
         !parameters.size && parameters.totalInvestment
@@ -297,8 +344,6 @@ const size =
       return createdOrder;
     }
 
-    // 3 - User creates a LIMIT order type providing the quantity (size) and price (price) he wants the order to be executed at
-    // 4 - User creates a LIMIT order type providing the totalInvestment (totalInvestment) and price (price) he wants the order to be executed at
     if (parameters.type === OrderType.LIMIT) {
       parameters.instrument.close = parameters.price!!;
 

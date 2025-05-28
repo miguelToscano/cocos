@@ -80,13 +80,13 @@ describe("AppController (e2e)", () => {
     expect(response.status).toBe(400);
   });
 
-  it('[POST /orders] CASH_IN Order creation should fail when instrument is not a currency', async () => {
+  it("[POST /orders] CASH_IN Order creation should fail when instrument is not a currency", async () => {
     const response = await request(app.getHttpServer()).post("/orders").send({
       userId: 1,
       instrumentId: 1,
       side: "CASH_IN",
       type: "MARKET",
-      size: 10
+      size: 10,
     });
 
     expect(response.status).toBe(400);
@@ -149,7 +149,7 @@ describe("AppController (e2e)", () => {
       instrumentId: 66,
       side: "BUY",
       type: "LIMIT",
-      size: 10
+      size: 10,
     });
 
     expect(response.status).toBe(400);
@@ -481,7 +481,7 @@ describe("AppController (e2e)", () => {
       instrumentId: 1,
       side: OrderSide.SELL,
       type: OrderType.MARKET,
-      totalInvestment: 2590
+      totalInvestment: 2590,
     });
 
     expect(response.status).toBe(201);
@@ -510,10 +510,10 @@ describe("AppController (e2e)", () => {
       instrumentId: 1,
       side: OrderSide.SELL,
       type: OrderType.MARKET,
-      totalInvestment: 3000
+      totalInvestment: 3000,
     });
 
-    console.log(response.body)
+    console.log(response.body);
 
     expect(response.status).toBe(201);
     expect(response.body.status).toBe(OrderStatus.REJECTED);
