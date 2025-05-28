@@ -17,7 +17,7 @@ export class OrdersRepository {
    *
    * @param parameter - The parameters required to create a new order, including instrumentId, userId, size, price, type, side, and status.
    * @returns A promise that resolves to the newly created Order object.
-   * @throws InternalServerErrorException if the database operation fails.
+   * @throws {InternalServerErrorException} if the database operation fails.
    */
   async createOrder(parameter: CreateOrderParameters): Promise<Order> {
     try {
