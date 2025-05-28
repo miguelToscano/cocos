@@ -16,8 +16,8 @@ CREATE TABLE instruments (
 );
 
 -- Both of these indexes support TEXT search when searching by `tsvector && tsquery` and `TEXT ilike %TEXT%`
-CREATE INDEX textsearch_idx ON instruments USING GIN (to_tsvector(ticker || ' ' || name));
-CREATE INDEX textsearch2_idx ON instruments USING GIN (to_tsvector(name));
+CREATE INDEX textsearch_idx ON instruments USING GIN (to_tsvector('english', ticker || ' ' || name));
+CREATE INDEX textsearch2_idx ON instruments USING GIN (to_tsvector('english', name));
 CREATE INDEX trgm_name_idx ON instruments USING GIN ((ticker || ' ' || name) gin_trgm_ops);
 
 CREATE TABLE orders (
