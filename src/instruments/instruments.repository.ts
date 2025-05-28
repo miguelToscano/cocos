@@ -111,8 +111,8 @@ export class InstrumentsRepository {
                 ticker = :search
                 OR name = :search
                 OR (ticker || ' ' || name) ILIKE :fuzzySearch
-                OR to_tsvector(ticker || ' ' || name) @@ to_tsquery(:tsQuerySearch)
-                OR to_tsvector(name) @@ to_tsquery(:tsQuerySearch)
+                OR to_tsvector('english', ticker || ' ' || name) @@ to_tsquery(:tsQuerySearch)
+                OR to_tsvector('english', name) @@ to_tsquery(:tsQuerySearch)
               ORDER BY ticker ASC, name ASC
               LIMIT :limit
               OFFSET :offset
