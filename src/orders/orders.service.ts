@@ -100,6 +100,7 @@ export class OrdersService {
           instrument,
         });
       default:
+        throw new BadRequestException(`Invalid order side: ${parameters.side}`);
     }
   }
 
