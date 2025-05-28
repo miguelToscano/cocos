@@ -34,7 +34,7 @@ docker compose up -d db --build
 npm run start
 ```
 
-Al momento de levantar la base de datos automaticamente se ejecutara un script `init.sql` que creara las tablas e indices necesarios y cargara datos de prueba. Para poder testear la performance de la aplicacion se crea un usuario con `id` = 5 para el cual se crean 30.000 ordenes (10.000 de CASH_IN + 20.000 de BUY). Asi mismo tambien se crean 10.000 instrumentos para comprobar la performance de los endpoints de busqueda.
+Al momento de levantar la base de datos automaticamente se ejecutara un script `init.sql` que creara las tablas e indices necesarios y cargara datos de prueba. Para poder testear la performance de la aplicacion se crea un usuario con `id` = 5 para el cual se crean 10.000 ordenes (5.000 de CASH_IN + 5.000 de BUY). Asi mismo tambien se crean 3000 instrumentos para comprobar la performance de los endpoints de busqueda.
 
 ### Tests
 Para ejecutar los tests usar el siguiente comando (el mismo tambien levantara la base de datos de prueba):
@@ -48,4 +48,3 @@ npm run test:e2e
 - Priorice 100% la performance de la aplicacion por lo cual opte por usar raw SQL para tener el mayor control posible sobre las consultas y sus planes de ejecucion, logrando asi poder soportar una gran cantidad de datos sin problemas.
 - Cree indices necesarios en las tablas para mejorar la performance de las consultas (Incluyendo optimizaciones para busqueda de texto).
 - Si bien en todos los endpoints se envia `userId`, este dato deberia obtenerse a traves de la autenticacion del cliente.
-  
