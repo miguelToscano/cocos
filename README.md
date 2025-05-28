@@ -33,3 +33,9 @@ docker compose up -d db --build
 ```bash
 npm run start
 ```
+
+### Tests
+Para ejecutar los tests usar el siguiente comando (el mismo tambien levantara la base de datos de prueba):
+```bash
+npm run test:e2e
+```
