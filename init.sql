@@ -284,8 +284,6 @@ INSERT INTO "orders" (instrument_id,user_id,size,price,side,status,type,datetime
   (54,1,500,250,'BUY','FILLED','MARKET','2023-07-13 14:11:20'),
   (31,1,30,1530,'SELL','FILLED','MARKET','2023-07-13 15:13:20');
 
-SET synchronous_commit = 'off';
-
 INSERT INTO instruments (ticker, name, type)
 select
 	'ABC' || generate_series::text as ticker,
@@ -339,8 +337,6 @@ select
 	'BUY' as side,
 	'FILLED' as status
 from generate_series(1, 2500, 1);
-
-SET synchronous_commit = 'on';
 
 SELECT pg_prewarm('users');
 SELECT pg_prewarm('orders');

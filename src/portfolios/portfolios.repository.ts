@@ -79,7 +79,7 @@ export class PortfoliosRepository {
                           'name', a.name,
                           'quantity', a.quantity,
                           'currentValue', a.quantity * a.close,
-                          'dailyYield', CASE WHEN a.quantity != 0 AND a.previous_close != 0 THEN ((100 - (a.quantity * a.close) * 100 / (a.quantity * a.previous_close))::NUMERIC(10, 2))::TEXT || '%' ELSE '0%' END   
+                          'dailyYield', CASE WHEN a.quantity != 0 AND a.previous_close != 0 THEN (((a.quantity * a.close) * 100 / (a.quantity * a.previous_close) - 100)::NUMERIC(10, 2))::TEXT || '%' ELSE '0%' END   
                       ) 
                   ORDER BY a.quantity DESC), '[]'::jsonb) AS assets
               FROM assets a
