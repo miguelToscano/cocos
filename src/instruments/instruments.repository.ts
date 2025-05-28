@@ -40,7 +40,16 @@ export class InstrumentsRepository {
                 name,
                 type,
                 COUNT(i.id) OVER() as count
-              FROM instruments i 
+              FROM instruments i
+        ), paginated_matches AS (
+              SELECT 
+                id,
+                ticker,
+                name,
+                type,
+                count
+              FROM matches
+              ORDER BY ticker ASC, name ASC
               LIMIT :limit
               OFFSET :offset
         )
@@ -53,7 +62,7 @@ export class InstrumentsRepository {
             ) ORDER BY ticker ASC, name ASC
           ) as instruments,
           MAX(count)::int AS count
-        FROM matches m
+        FROM paginated_matches m
       `,
         {
           type: QueryTypes.SELECT,
@@ -114,6 +123,15 @@ export class InstrumentsRepository {
                 OR to_tsvector('english', ticker || ' ' || name) @@ to_tsquery(:tsQuerySearch)
                 OR to_tsvector('english', name) @@ to_tsquery(:tsQuerySearch)
               ORDER BY ticker ASC, name ASC
+            ), paginated_matches AS (
+              SELECT 
+                id,
+                ticker,
+                name,
+                type,
+                count
+              FROM matches
+              ORDER BY ticker ASC, name ASC
               LIMIT :limit
               OFFSET :offset
             )
@@ -126,7 +144,7 @@ export class InstrumentsRepository {
                 ) ORDER BY ticker ASC, name ASC
               ) as instruments,
               MAX(count)::int as count
-            FROM matches m
+            FROM paginated_matches m
             
         `,
         {
