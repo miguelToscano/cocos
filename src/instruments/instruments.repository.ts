@@ -4,7 +4,6 @@ import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { QueryTypes } from "sequelize";
 import { InstrumentWithPrice } from "./domain/aggregates/instrument-price";
 import { InstrumentType } from "./domain/enums/instrument-type.enum";
-import { z } from "zod";
 
 @Injectable()
 export class InstrumentsRepository {

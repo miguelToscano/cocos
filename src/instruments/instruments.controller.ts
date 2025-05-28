@@ -1,13 +1,8 @@
-import { Controller, Get, Param, Query } from "@nestjs/common";
+import { Controller, Get, Query } from "@nestjs/common";
 import { InstrumentsService } from "./instruments.service";
 import {
   GetInstrumentsRequestDto,
-  GetInstrumentsResponseDto,
 } from "./dto/get-assets.dto";
-import {
-  GetInstrumentRequestDto,
-  GetInstrumentResponseDto,
-} from "./dto/get-asset.dto";
 
 @Controller("instruments")
 export class InstrumentsController {

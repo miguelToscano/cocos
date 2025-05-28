@@ -9,7 +9,6 @@ import { Order } from "./domain/entities/order.entity";
 import { InstrumentsRepository } from "../instruments/instruments.repository";
 import { OrderSide } from "./domain/enums/order-side.enum";
 import { OrderType } from "./domain/enums/order-type.enum";
-import { PickType } from "@nestjs/mapped-types";
 import { PortfoliosRepository } from "../portfolios/portfolios.repository";
 import { InstrumentType } from "../instruments/domain/enums/instrument-type.enum";
 import { InstrumentWithPrice } from "../instruments/domain/aggregates/instrument-price";

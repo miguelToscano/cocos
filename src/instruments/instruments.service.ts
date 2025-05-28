@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { InstrumentsRepository } from "./instruments.repository";
 import { Instrument } from "./domain/entities/instrument.entity";
 import {
