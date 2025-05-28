@@ -536,8 +536,6 @@ describe("AppController (e2e)", () => {
       totalInvestment: 3000,
     });
 
-    console.log(response.body);
-
     expect(response.status).toBe(201);
     expect(response.body.status).toBe(OrderStatus.REJECTED);
     expect(response.body.side).toBe(OrderSide.SELL);
