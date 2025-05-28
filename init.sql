@@ -327,7 +327,7 @@ select
 	'MARKET' as type,
 	'BUY' as side,
 	'FILLED' as status
-from generate_series(1, 1000, 1);
+from generate_series(1, 10000, 1);
 
 INSERT INTO orders (instrument_id, user_id, size, price, type, side, status)
 select
@@ -338,7 +338,7 @@ select
 	'MARKET' as type,
 	'BUY' as side,
 	'FILLED' as status
-from generate_series(1, 1000, 1);
+from generate_series(1, 10000, 1);
 
 SET synchronous_commit = 'on';
 
