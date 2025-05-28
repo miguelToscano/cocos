@@ -26,7 +26,7 @@ cp .env.example .env
 
 5 - Levantar base de datos
 ```bash
-docker compose up -d db
+docker compose up -d db --build
 ```
 
 6 - Levantar el servidor
