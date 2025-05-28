@@ -79,7 +79,7 @@ export class PortfoliosRepository {
                           'name', a.name,
                           'quantity', a.quantity,
                           'currentValue', a.quantity * a.close,
-                          'dailyYield', (((a.quantity * a.close) * 100 / (a.quantity * a.previous_close))::NUMERIC(10, 2) - 100)::TEXT || '%'
+                          'dailyYield', CASE WHEN a.quantity != 0 AND a.previous_close != 0 THEN (((a.quantity * a.close) * 100 / (a.quantity * a.previous_close))::NUMERIC(10, 2) - 100)::TEXT || '%' ELSE '0%' END   
                       ) 
                   ORDER BY a.quantity DESC), '[]'::jsonb) AS assets
               FROM assets a
@@ -101,7 +101,7 @@ export class PortfoliosRepository {
         ...userPortfolio,
         balance: {
           value: parseFloat(String(userPortfolio?.balance.value ?? 0)),
-          currency: userPortfolio?.balance.currency,
+          currency: userPortfolio?.balance.currency ?? "ARS",
         },
         assets:
           userPortfolio?.assets.map((asset) => ({
