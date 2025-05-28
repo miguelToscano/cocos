@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from "@nestjs/common";
 import { OrdersRepository } from "./orders.repository";
@@ -113,6 +114,7 @@ export class OrdersService {
    *
    * @param totalInvestment - The total amount of money to invest.
    * @param instrument - The instrument with its price and type information.
+   * @throws {InternalServerErrorException} If the instrument price is 0.
    * @returns The calculated size (quantity) of the instrument to purchase.
    */
   private getSizeFromTotalInvestment(
@@ -121,8 +123,14 @@ export class OrdersService {
   ): number {
     if (instrument.type === InstrumentType.MONEDA)
       return totalInvestment / instrument.close;
-    if (instrument.type === InstrumentType.ACCIONES)
+    if (instrument.type === InstrumentType.ACCIONES) {
+      if (instrument.close === 0) {
+        throw new InternalServerErrorException(
+          `Instrument with id: ${instrument.id} has a close price of 0`,
+        );
+      }
       return Math.floor(totalInvestment / instrument.close);
+    }
     return 1;
   }
 
