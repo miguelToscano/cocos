@@ -353,8 +353,6 @@ export class OrdersService {
     }
 
     if (parameters.type === OrderType.LIMIT) {
-      parameters.instrument.close = parameters.price!!;
-
       const size =
         !parameters.size && parameters.totalInvestment
           ? this.getSizeFromTotalInvestment(
