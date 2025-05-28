@@ -12,14 +12,13 @@ CREATE TABLE instruments (
   id SERIAL PRIMARY KEY,
   ticker VARCHAR(10) UNIQUE NOT NULL,
   name VARCHAR(255) UNIQUE NOT NULL,
-  type VARCHAR(10) NOT NULL,
-  textsearchable_index_col tsvector GENERATED ALWAYS AS (to_tsvector('spanish', ticker || ' ' || name)) STORED,
-  textsearchable_trgm_index_col text GENERATED ALWAYS AS (to_tsvector('spanish', ticker || ' ' || name)) STORED
+  type VARCHAR(10) NOT NULL
 );
 
 -- Both of these indexes support TEXT search when searching by `tsvector && tsquery` and `TEXT ilike %TEXT%`
-CREATE INDEX textsearch_idx ON instruments USING GIN (textsearchable_index_col);
-CREATE INDEX trgm_name_idx ON instruments USING GIN (textsearchable_trgm_index_col gin_trgm_ops);
+CREATE INDEX textsearch_idx ON instruments USING GIN (to_tsvector(ticker || ' ' || name));
+CREATE INDEX textsearch2_idx ON instruments USING GIN (to_tsvector(name));
+CREATE INDEX trgm_name_idx ON instruments USING GIN ((ticker || ' ' || name) gin_trgm_ops);
 
 CREATE TABLE orders (
   id SERIAL PRIMARY KEY,
