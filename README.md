@@ -6,7 +6,7 @@
 
 1 - Clonar repositorio
 ```bash
-git clone https://github.com/chelohalo/cocos-challenge-backend.git
+git clone https://github.com/miguelToscano/cocos.git
 ```
 
 2 - Entrar al directorio del proyecto
