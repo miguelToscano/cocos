@@ -47,16 +47,16 @@ npm run test:e2e
 - Las consultas a la base de datos deberian mapearse a modelos de ORM para asegurar la integridad de sus tipos.
 - Priorice 100% la performance de la aplicacion por lo cual opte por usar raw SQL para tener el mayor control posible sobre las consultas y sus planes de ejecucion, logrando asi poder soportar una gran cantidad de datos sin problemas.
 
-Beneficios:
-    - Total control sobre la consulta (a diferencia de una consulta generada por un ORM).
-    - Posibilidad de optimizar la consulta para casos particulares.
-    - No tener que hacer agregaciones a nivel de aplicacion, lo cual seria problematico con grandes volúmenes de datos (por ejemplo para un usuario con miles de ordenes).
-    - Reduce el ida y vuelta entre la aplicacion y la base de datos resultando en menores tiempos de respuesta. (Fundamental para endpoints recurrentes como el calculo de portfolio)
-    - La query es facilmente replicable en caso de tener que debuggear.
-Contras:
-    - Requirere un mayor conocimiento de SQL.
-    - Requirere un mayor esfuerzo de mantenimiento al no poder aprovechar las funcionalidades de un ORM.
-    - Se pierde el tipado de los modelos de ORM, por lo que se deberia tener cuidado al mapear los resultados a objetos de la aplicacion.
+    - Beneficios:
+        - Total control sobre la consulta (a diferencia de una consulta generada por un ORM).
+        - Posibilidad de optimizar la consulta para casos particulares.
+        - No tener que hacer agregaciones a nivel de aplicacion, lo cual seria problematico con grandes volúmenes de datos (por ejemplo para un usuario con miles de ordenes).
+        - Reduce el ida y vuelta entre la aplicacion y la base de datos resultando en menores tiempos de respuesta. (Fundamental para endpoints recurrentes como el calculo de portfolio)
+        - La query es facilmente replicable en caso de tener que debuggear.
+    - Contras:
+        - Requirere un mayor conocimiento de SQL.
+        - Requirere un mayor esfuerzo de mantenimiento al no poder aprovechar las funcionalidades de un ORM.
+        - Se pierde el tipado de los modelos de ORM, por lo que se deberia tener cuidado al mapear los resultados a objetos de la aplicacion.
     
 - Cree indices necesarios en las tablas para mejorar la performance de las consultas (Incluyendo optimizaciones para busqueda de texto).
 - Si bien en todos los endpoints se envia `userId`, este dato deberia obtenerse a traves de la autenticacion del cliente.
