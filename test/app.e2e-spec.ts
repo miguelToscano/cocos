@@ -105,6 +105,29 @@ describe("AppController (e2e)", () => {
     expect(response.status).toBe(400);
   });
 
+  it("[POST /orders] CASH_OUT Order creation should fail when instrument is not a currency ", async () => {
+    await createOrder({
+        userId: 1,
+        instrumentId: 66,
+        side: OrderSide.CASH_IN,
+        type: OrderType.MARKET,
+        size: 10,
+        price: 1,
+        status: OrderStatus.FILLED,
+      });
+
+    const response = await request(app.getHttpServer()).post("/orders").send({
+      userId: 1,
+      instrumentId: 66,
+      side: "CASH_OUT",
+      type: "MARKET",
+      size: 10,
+      totalInvestment: 1000,
+    });
+
+    expect(response.status).toBe(400);
+  });
+
   it("[POST /orders] BUY MARKET Order creation should fail when providing both size and totalInvestment parameters ", async () => {
     const response = await request(app.getHttpServer()).post("/orders").send({
       userId: 1,
@@ -222,15 +245,15 @@ describe("AppController (e2e)", () => {
   });
 
   it("[POST /orders] CASH_OUT Order creation should succeed when user has sufficient balance", async () => {
-    const a = await createOrder({
-      userId: 1,
-      instrumentId: 66,
-      side: OrderSide.CASH_IN,
-      type: OrderType.MARKET,
-      size: 10,
-      price: 1,
-      status: OrderStatus.FILLED,
-    });
+      await createOrder({
+        userId: 1,
+        instrumentId: 66,
+        side: OrderSide.CASH_IN,
+        type: OrderType.MARKET,
+        size: 10,
+        price: 1,
+        status: OrderStatus.FILLED,
+      });
 
     const response = await request(app.getHttpServer()).post("/orders").send({
       userId: 1,
