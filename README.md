@@ -34,6 +34,8 @@ docker compose up -d db --build
 npm run start
 ```
 
+Al momento de levantar la base de datos se ejecutara un script que creara las tablas necesarias y cargara datos de prueba. Para poder verdaderamente testear la performance de la aplicacion se crea un usuario con `id` = 1 para el cual se crean 140000 ordenes (10000 de CASH_IN + 2000 de BUY). Asi mismo tambien se crean 10000 instrumentos para comprobar la performance de los endpoints de busqueda.
+
 ### Tests
 Para ejecutar los tests usar el siguiente comando (el mismo tambien levantara la base de datos de prueba):
 ```bash
