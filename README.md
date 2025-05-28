@@ -54,7 +54,8 @@ npm run test:e2e
         - Reduce el ida y vuelta entre la aplicacion y la base de datos resultando en menores tiempos de respuesta. (Fundamental para endpoints recurrentes como el calculo de portfolio)
         - La query es facilmente replicable en caso de tener que debuggear.
     - Contras:
-        - Requirere un mayor conocimiento de SQL.
+        - Requirere un mayor conocimiento de PostgreSQL.
+        - Algunas consultas no son portables a otroas bases de datos.
         - Requirere un mayor esfuerzo de mantenimiento al no poder aprovechar las funcionalidades de un ORM.
         - Se pierde el tipado de los modelos de ORM, por lo que se deberia tener cuidado al mapear los resultados a objetos de la aplicacion.
     
