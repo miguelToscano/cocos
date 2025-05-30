@@ -13,5 +13,6 @@ export interface Portfolio {
 export interface PortfolioAsset extends Instrument {
   quantity: number;
   dailyYield: string;
+  profitPercentage: string;
   currentValue: number;
 }
