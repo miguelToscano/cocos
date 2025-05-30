@@ -309,7 +309,7 @@ INSERT INTO orders (instrument_id, user_id, size, price, type, side, status)
 select
 	66 as instrumentid,
 	5 as userid,
-	100 as size,
+	2000 as size,
 	1 as price,
 	'MARKET' as type,
 	'CASH_IN' as side,
