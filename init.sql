@@ -321,7 +321,7 @@ select
 	2 as instrumentid,
 	5 as userid,
 	1 as size,
-	1 as price,
+	1900 as price,
 	'MARKET' as type,
 	'BUY' as side,
 	'FILLED' as status
@@ -332,7 +332,7 @@ select
 	1 as instrumentid,
 	5 as userid,
 	1 as size,
-	1 as price,
+	250 as price,
 	'MARKET' as type,
 	'BUY' as side,
 	'FILLED' as status
