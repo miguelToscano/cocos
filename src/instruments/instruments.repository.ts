@@ -70,7 +70,10 @@ export class InstrumentsRepository {
                   name,
                   type,
                   count,
-                  ((m.close * 100 / m.previous_close) - 100)::NUMERIC(10, 2)::TEXT || '%' AS daily_yield
+                  CASE
+                    WHEN m.previous_close = 0 OR m.previous_close IS NULL OR m.close IS NULL THEN NULL
+                    ELSE ((m.close * 100 / m.previous_close) - 100)::NUMERIC(10, 2)::TEXT || '%'
+                  END as daily_yield
               FROM paginated_matches pm
               LEFT JOIN LATERAL (
                     SELECT
