@@ -67,8 +67,9 @@ export class PortfoliosRepository {
               ) AS balance
               FROM orders o
               INNER JOIN instruments i ON i.id = o.instrument_id
-              WHERE 
-                  o.user_id = u.id
+              WHERE
+                  u.id = :userId
+                  AND o.user_id = u.id
                   AND o.status = '${OrderStatus.FILLED}'
           ) AS user_balance ON TRUE
           LEFT JOIN LATERAL (
