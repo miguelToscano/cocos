@@ -29,16 +29,11 @@ export class InstrumentsService {
     limit?: number;
     offset?: number;
   }): Promise<{ instruments: Instrument[]; count: number }> {
-    const instruments = search
-      ? await this.instrumentsRepository.searchInstruments({
-          search,
-          limit: limit ?? DEFAULT_LIMIT,
-          offset: offset ?? DEFAULT_OFFSET,
-        })
-      : await this.instrumentsRepository.getInstruments({
-          limit: limit ?? DEFAULT_LIMIT,
-          offset: offset ?? DEFAULT_OFFSET,
-        });
+    const instruments = await this.instrumentsRepository.getInstruments({
+      search,
+      limit: limit ?? DEFAULT_LIMIT,
+      offset: offset ?? DEFAULT_OFFSET,
+    });
 
     return instruments as unknown as {
       instruments: Instrument[];

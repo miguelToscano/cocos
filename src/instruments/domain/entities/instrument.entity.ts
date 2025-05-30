@@ -5,4 +5,5 @@ export class Instrument {
   ticker: string;
   name: string;
   type: InstrumentType;
+  dailyYield: string;
 }
