@@ -81,7 +81,8 @@ export class PortfoliosRepository {
                           'quantity', a.quantity,
                           'currentValue', a.quantity * a.close,
                           'dailyYield', CASE WHEN a.quantity != 0 AND a.previous_close != 0 THEN (((a.quantity * a.close) * 100 / (a.quantity * a.previous_close) - 100)::NUMERIC(10, 2))::TEXT || '%' ELSE '0%' END,
-                          'profitPercentage', CASE WHEN a.quantity != 0 AND a.total_value != 0 THEN (((a.quantity * a.close) / (a.total_value) * 100 - 100)::NUMERIC(10, 2))::TEXT || '%' ELSE '0%' END
+                          'profitPercentage', CASE WHEN a.quantity != 0 AND a.total_value != 0 THEN (((a.quantity * a.close) / (a.total_value) * 100 - 100)::NUMERIC(10, 2))::TEXT || '%' ELSE '0%' END,
+                          'profitValue', ((a.quantity * a.close) - (a.total_value))::NUMERIC(10, 2)
                       ) 
                   ORDER BY a.quantity DESC), '[]'::jsonb) AS assets
               FROM assets a
@@ -109,6 +110,7 @@ export class PortfoliosRepository {
           userPortfolio?.assets.map((asset) => ({
             ...asset,
             currentValue: parseFloat(String(asset.currentValue ?? 0)),
+            profitValue: parseFloat(String(asset.profitValue ?? 0)),
           })) || [],
       } as Portfolio;
     } catch (error) {
