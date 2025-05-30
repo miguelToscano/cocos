@@ -62,7 +62,7 @@ export class PortfoliosRepository {
           LEFT JOIN LATERAL (
               SELECT JSONB_BUILD_OBJECT(
                 'value', (COALESCE(SUM(o.price * o.size) FILTER (WHERE side IN ('${OrderSide.CASH_IN}', '${OrderSide.SELL}')), 0) -
-                  COALESCE(SUM(o.price * o.size) FILTER (WHERE side IN ('${OrderSide.CASH_OUT}', '${OrderSide.BUY}')), 0))::NUMERIC(10, 2),
+                  COALESCE(SUM(o.price * o.size) FILTER (WHERE side IN ('${OrderSide.CASH_OUT}', '${OrderSide.BUY}')), 0))::NUMERIC(20, 2),
                 'currency', 'ARS'
               ) AS balance
               FROM orders o
@@ -81,8 +81,8 @@ export class PortfoliosRepository {
                           'name', a.name,
                           'quantity', a.quantity,
                           'currentValue', a.quantity * a.close,
-                          'profitPercentage', CASE WHEN a.quantity != 0 AND a.total_value != 0 THEN (((a.quantity * a.close) / (a.total_value) * 100 - 100)::NUMERIC(10, 2))::TEXT || '%' ELSE '0%' END,
-                          'profitValue', ((a.quantity * a.close) - (a.total_value))::NUMERIC(10, 2)
+                          'profitPercentage', CASE WHEN a.quantity != 0 AND a.total_value != 0 THEN (((a.quantity * a.close) / (a.total_value) * 100 - 100)::NUMERIC(20, 2))::TEXT || '%' ELSE '0%' END,
+                          'profitValue', ((a.quantity * a.close) - (a.total_value))::NUMERIC(20, 2)
                       ) 
                   ORDER BY a.quantity DESC), '[]'::jsonb) AS assets
               FROM assets a
@@ -135,7 +135,7 @@ export class PortfoliosRepository {
         `
         SELECT 
             COALESCE(SUM(o.price * o.size) FILTER (WHERE o.side IN ('${OrderSide.CASH_IN}', '${OrderSide.SELL}')), 0) -
-            COALESCE(SUM(o.price * o.size) FILTER (WHERE o.side IN ('${OrderSide.CASH_OUT}', '${OrderSide.BUY}')), 0)::NUMERIC(10, 2) AS value,
+            COALESCE(SUM(o.price * o.size) FILTER (WHERE o.side IN ('${OrderSide.CASH_OUT}', '${OrderSide.BUY}')), 0)::NUMERIC(20, 2) AS value,
             'ARS' AS currency
         FROM users u
         LEFT JOIN orders o ON o.user_id = u.id
