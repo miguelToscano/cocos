@@ -80,7 +80,7 @@ export class PortfoliosRepository {
                           'name', a.name,
                           'quantity', a.quantity,
                           'currentValue', a.quantity * a.close,
-                          'dailyYield', CASE WHEN a.quantity != 0 AND a.previous_close != 0 THEN (((a.quantity * a.close) * 100 / (a.quantity * a.previous_close) - 100)::NUMERIC(10, 2))::TEXT || '%' ELSE '0%' END,
+                          'dailyYield', CASE WHEN a.quantity != 0 AND a.previous_close != 0 THEN ((a.close * 100 / a.previous_close) - 100)::NUMERIC(10, 2)::TEXT || '%' ELSE '0%' END,
                           'profitPercentage', CASE WHEN a.quantity != 0 AND a.total_value != 0 THEN (((a.quantity * a.close) / (a.total_value) * 100 - 100)::NUMERIC(10, 2))::TEXT || '%' ELSE '0%' END,
                           'profitValue', ((a.quantity * a.close) - (a.total_value))::NUMERIC(10, 2)
                       ) 
