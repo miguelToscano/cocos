@@ -43,9 +43,8 @@ npm run test:e2e
 ```
 
 ### Consideraciones
-- La inicializacion de la base de datos se deberia realizar a traves de migraciones.
-- Las consultas a la base de datos deberian mapearse a modelos de ORM para asegurar la integridad de sus tipos.
-- Priorice 100% la performance de la aplicacion por lo cual opte por usar raw SQL para tener el mayor control posible sobre las consultas y sus planes de ejecucion, logrando asi poder soportar una gran cantidad de datos sin problemas.
+- La inicializacion de la base de datos se deberia realizar a traves de migraciones (opte por usar SQL scripts por conveniencia y falta de tiempo).
+- Priorice 100% la performance de la aplicacion por lo cual opte por usar raw SQL para tener el mayor control posible sobre las consultas y sus planes de ejecucion, logrando asi poder soportar una gran cantidad de datos sin problemas (Por ejemplo con el usuario con `id = 5`).
 
     - Beneficios:
         - Total control sobre la consulta (a diferencia de una consulta generada por un ORM).
