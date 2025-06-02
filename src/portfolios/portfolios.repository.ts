@@ -27,33 +27,33 @@ export class PortfoliosRepository {
     try {
       const userPortfolio = await this.database.query<Portfolio>(
         `
-            WITH assets AS (
-              SELECT
-                  o.user_id,
-                  i.id,
-                  i.ticker,
-                  i.name,
-                  marketdata.close,
-                  marketdata.previous_close,
-                  COALESCE(SUM(o.size) FILTER (WHERE o.side = '${OrderSide.BUY}'), 0) - COALESCE(SUM(o.size) FILTER (WHERE o.side = '${OrderSide.SELL}'), 0) AS quantity,
-                  COALESCE(SUM(o.size * o.price) FILTER (WHERE o.side = '${OrderSide.BUY}'), 0) - COALESCE(SUM(o.size * o.price) FILTER (WHERE o.side = '${OrderSide.SELL}'), 0) as total_value
-              FROM orders o
-              INNER JOIN instruments i ON o.instrument_id = i.id
-              LEFT JOIN LATERAL (
-                  SELECT
-                      close,
-                      previous_close
-                  FROM marketdata 
-                  WHERE marketdata.instrument_id = i.id
-                  ORDER BY date DESC
-                  LIMIT 1
-              ) AS marketdata ON TRUE
-              WHERE 
-                  o.user_id = :userId
-                  AND o.status = '${OrderStatus.FILLED}'
-                  AND i.type = '${InstrumentType.ACCIONES}'
-                  ${instrumentId ? `AND i.id = :instrumentId` : ``}
-              GROUP BY o.user_id, i.id, i.ticker, i.name, marketdata.close, marketdata.previous_close
+          WITH assets AS (
+            SELECT
+                o.user_id,
+                i.id,
+                i.ticker,
+                i.name,
+                marketdata.close,
+                marketdata.previous_close,
+                COALESCE(SUM(o.size) FILTER (WHERE o.side = '${OrderSide.BUY}'), 0) - COALESCE(SUM(o.size) FILTER (WHERE o.side = '${OrderSide.SELL}'), 0) AS quantity,
+                COALESCE(SUM(o.size * o.price) FILTER (WHERE o.side = '${OrderSide.BUY}'), 0) - COALESCE(SUM(o.size * o.price) FILTER (WHERE o.side = '${OrderSide.SELL}'), 0) as total_value
+            FROM orders o
+            INNER JOIN instruments i ON o.instrument_id = i.id
+            LEFT JOIN LATERAL (
+                SELECT
+                    close,
+                    previous_close
+                FROM marketdata 
+                WHERE marketdata.instrument_id = i.id
+                ORDER BY date DESC
+                LIMIT 1
+            ) AS marketdata ON TRUE
+            WHERE 
+                o.user_id = :userId
+                AND o.status = '${OrderStatus.FILLED}'
+                AND i.type = '${InstrumentType.ACCIONES}'
+                ${instrumentId ? `AND i.id = :instrumentId` : ``}
+            GROUP BY o.user_id, i.id, i.ticker, i.name, marketdata.close, marketdata.previous_close
           )
           SELECT
               user_balance.balance,
