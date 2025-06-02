@@ -10,11 +10,11 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         dialect: "postgres",
-        host: configService.get("DATABASE_HOST", "localhost"),
-        port: parseInt(configService.get("DATABASE_PORT", "5432")),
-        username: configService.get("DATABASE_USERNAME", "postgres"),
-        password: configService.get("DATABASE_PASSWORD", "postgres"),
-        database: configService.get("DATABASE_NAME", "cocos"),
+        host: configService.get("DATABASE_HOST"),
+        port: parseInt(configService.get("DATABASE_PORT")!!),
+        username: configService.get("DATABASE_USERNAME"),
+        password: configService.get("DATABASE_PASSWORD",),
+        database: configService.get("DATABASE_NAME"),
         pool: {
           max: 10,
           min: 2,

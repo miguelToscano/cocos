@@ -63,7 +63,7 @@ describe("AppController (e2e)", () => {
     database = app.get(Sequelize);
   });
 
-  beforeEach(async () => {
+  afterEach(async () => {
     await database.query("DELETE FROM orders");
   });
 

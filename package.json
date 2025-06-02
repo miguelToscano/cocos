@@ -19,7 +19,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "npm run test:e2e:up && npm run test:e2e:run && npm run test:e2e:down",
     "test:e2e:up": "docker-compose up -d test_db",
-    "test:e2e:run": "dotenv -e .env.test -- jest",
+    "test:e2e:run": "jest",
     "test:e2e:down": "docker-compose stop test_db && docker-compose rm -f test_db"
   },
   "dependencies": {
